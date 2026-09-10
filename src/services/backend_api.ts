@@ -8,5 +8,5 @@ export interface CommandEvaluationRequest {
 
 export async function evaluateCommand(request: CommandEvaluationRequest) {
   // Placeholder for HTTP client to backend
-  return { status: 'safe', allowed: true };
+  return { status: 'safe', allowed: true, evaluatedCommand: request.command };
 }

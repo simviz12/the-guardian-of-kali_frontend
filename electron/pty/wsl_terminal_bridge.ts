@@ -8,8 +8,8 @@ export interface TerminalBridgeOptions {
 }
 
 export class WslTerminalBridge {
-  private distro: string;
-  private user: string;
+  public readonly distro: string;
+  public readonly user: string;
 
   constructor(options: TerminalBridgeOptions) {
     this.distro = options.distro;
@@ -18,5 +18,6 @@ export class WslTerminalBridge {
 
   public initializeSession(): void {
     // Placeholder: node-pty integration will be attached here.
+    console.log(`Connecting to WSL distro: ${this.distro} as ${this.user}`);
   }
 }
