@@ -1,14 +1,14 @@
 /**
  * Type declarations for terminal IPC and window context bridge.
  */
-export interface IElectronAPI {
-  sendTerminalInput: (data: string) => void;
-  sendTerminalResize: (cols: number, rows: number) => void;
-  onTerminalOutput: (callback: (data: string) => void) => void;
+export interface TerminalBridgeAPI {
+  sendInput: (text: string) => void;
+  onOutput: (callback: (data: string) => void) => () => void;
+  closeSession: () => void;
 }
 
 declare global {
   interface Window {
-    electronAPI: IElectronAPI;
+    terminalAPI: TerminalBridgeAPI;
   }
 }

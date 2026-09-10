@@ -66,11 +66,12 @@ export class WslTerminalBridge {
   }
 
   /**
-   * Registers IPC handlers for sending terminal input and handling resize events.
+   * Registers IPC handlers for sending terminal input, resize events, and closing sessions.
    */
   private registerIpcHandlers(): void {
     ipcMain.on('terminal:input', this.handleTerminalInput);
     ipcMain.on('terminal:resize', this.handleTerminalResize);
+    ipcMain.on('terminal:close', this.handleTerminalClose);
   }
 
   private handleTerminalInput = (_: IpcMainEvent, data: string): void => {
@@ -92,12 +93,17 @@ export class WslTerminalBridge {
     }
   };
 
+  private handleTerminalClose = (_: IpcMainEvent): void => {
+    this.cleanup();
+  };
+
   /**
    * Cleans up running PTY processes and unregisters IPC handlers on window close.
    */
   public cleanup(): void {
     ipcMain.removeListener('terminal:input', this.handleTerminalInput);
     ipcMain.removeListener('terminal:resize', this.handleTerminalResize);
+    ipcMain.removeListener('terminal:close', this.handleTerminalClose);
 
     if (this.ptyProcess) {
       try {
