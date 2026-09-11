@@ -1,93 +1,158 @@
-# The Guardian of Kali — Aplicación de Escritorio (`the-guardian-of-kali_frontend`)
+# The Guardian of Kali — Desktop Application (`the-guardian-of-kali_frontend`)
 
-Aplicación de escritorio para **The Guardian of Kali**, un entorno de terminal integrado para **Kali Linux sobre WSL2** complementado con un copiloto de inteligencia artificial para ciberseguridad ofensiva, pruebas de penetración y entrenamiento en CTFs (HackTheBox, TryHackMe, laboratorios locales).
+[![React](https://img.shields.io/badge/React-18.3+-61DAFB.svg?logo=react&logoColor=black)](https://react.dev)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.5+-3178C6.svg?logo=typescript&logoColor=white)](https://www.typescriptlang.org)
+[![Electron](https://img.shields.io/badge/Electron-32.0+-47848F.svg?logo=electron&logoColor=white)](https://www.electronjs.org)
+[![Vite](https://img.shields.io/badge/Vite-5.4+-646CFF.svg?logo=vite&logoColor=white)](https://vitejs.dev)
+[![TailwindCSS](https://img.shields.io/badge/TailwindCSS-3.4+-06B6D4.svg?logo=tailwindcss&logoColor=white)](https://tailwindcss.com)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
----
-
-## ✨ Características Principales
-
-- **Terminal Nativa de Kali Linux**: Sesión pseudoterminal (PTY) real usando `@xterm/xterm`, `@xterm/addon-fit` y `node-pty` conectada directamente a Kali Linux sobre WSL2 bajo la identidad del operador (`carlos`).
-- **Copiloto Asistente con IA (Claude 3.5 Sonnet)**: Chat en lenguaje natural en tiempo real integrado con el motor de políticas del backend y la API de Anthropic Claude (`/chat`).
-- **Indicador Visual de Políticas (Semáforo de Seguridad)**: Componente `PolicyIndicator` que clasifica visualmente el nivel de riesgo (`LOW`, `MEDIUM`, `HIGH`, `BLOCKED`) y la decisión de política antes de ejecutar cualquier comando.
-- **Configuración de Sesión Zero-Trust**: Pantalla inicial obligatoria (`SessionSetup`) para fijar el alcance de IPs/CIDRs/dominios autorizados y seleccionar el modo de operación (`suggestion` vs `autonomous`).
-- **Historial y Auditoría de Comandos**: Tabla filtrable, ordenable y paginada (`SessionHistory`) que audita cada comando ejecutado, su origen (`AI` o `MANUAL_USER`), fecha y resultado.
-- **Manejo Global de Errores y Resiliencia**: Diagnósticos interactivos (`ErrorBanner`, `ErrorModal`) con sugerencias directas de remediación ante caídas de backend, límites de cuota de Claude API, desconexión de WSL2 o validaciones Pydantic.
+Cross-platform desktop application for **The Guardian of Kali** — an integrated dual-pane cybersecurity terminal for **Kali Linux on WSL2** coupled with a real-time **Anthropic Claude 3.5 Sonnet** ethical hacking co-pilot and zero-trust safety guardrails.
 
 ---
 
-## 🏛️ Arquitectura del Frontend
+## 📋 Table of Contents
 
-El frontend está desarrollado con **Electron** y **React 18 con TypeScript**, empaquetado con **Vite**:
-
-```
-src/
-├── components/
-│   ├── Terminal.tsx             # Emulador interactivo xterm.js con soporte PTY
-│   ├── ChatPanel.tsx            # Interfaz de chat con el copiloto Claude
-│   ├── PolicyIndicator.tsx      # Indicador de estado y riesgo de políticas
-│   ├── SessionSetup.tsx         # Configuración zero-trust de objetivos y modo
-│   ├── SessionHistory.tsx       # Tabla de auditoría y comandos históricos
-│   ├── ErrorBanner.tsx          # Banner superior para alertas de error accionables
-│   └── ErrorModal.tsx           # Modal detallado para errores técnicos y validación
-├── services/
-│   └── apiClient.ts             # Cliente HTTP tipado contra la API FastAPI (8765)
-├── types/
-│   └── errors.ts                # Modelos de error estructurados y tipados
-├── App.tsx                      # Orquestador principal y maquetación de pantalla dividida
-└── main.tsx                     # Punto de entrada de React
-```
+- [Core Features](#core-features)
+- [Prerequisites (WSL2 + Kali Linux + Node.js)](#prerequisites-wsl2--kali-linux--nodejs)
+- [Installation Steps](#installation-steps)
+- [Secure API Key Configuration](#secure-api-key-configuration)
+- [Quickstart Guide](#quickstart-guide)
+  - [Operating Modes: Suggestion vs Autonomous](#operating-modes-suggestion-vs-autonomous)
+  - [Policy Indicator Colors & Threat Matrix](#policy-indicator-colors--threat-matrix)
+- [Architecture & Security Principles](#architecture--security-principles)
+- [Development & Build Commands](#development--build-commands)
+- [License](#license)
 
 ---
 
-## 🚀 Stack Tecnológico
+## ✨ Core Features
 
-- **Entorno de Escritorio**: Electron 32
-- **Interfaz de Usuario**: React 18 + TypeScript + Vite
-- **Terminal Emulator**: `@xterm/xterm` 5.5 + `@xterm/addon-fit` + `node-pty`
-- **Estilos y Maquetación**: TailwindCSS
-- **Cliente HTTP**: Fetch API nativo con manejo inteligente de errores y tipado estricto
+- **Native Kali Linux Pseudo-Terminal (PTY)**: Hardware-accelerated terminal emulator built with `@xterm/xterm` 5.5, `@xterm/addon-fit`, and `node-pty` connected directly to your Kali Linux WSL2 instance under the human operator identity (`carlos`).
+- **AI Cybersecurity Co-Pilot (Claude 3.5 Sonnet)**: Conversational assistant tailored for penetration testing, CTFs (HackTheBox, TryHackMe), and vulnerability analysis with structured command proposals.
+- **Visual Policy Indicator (Safety Traffic Light)**: Real-time UI indicator rendering risk classification (`LOW`, `MEDIUM`, `HIGH`, `BLOCKED`) and exact policy decision reasons before commands touch the shell.
+- **Zero-Trust Session Setup**: Initial setup screen enforcing strict target scope definition (IPs, CIDR subnets, domain names) and operational execution mode.
+- **Audit History & Forensics**: Searchable, paginated audit table recording executed commands, origin (`AI` vs `MANUAL_USER`), timestamps, risk scores, and process exit codes.
+- **Global Error Handling & Resilience**: Interactive diagnostics (`ErrorBanner`, `ErrorModal`) providing one-click recovery hints for backend downtime, Claude API rate limits, or WSL2 connection failures.
 
 ---
 
-## ⚙️ Instalación y Ejecución
+## ⚙️ Prerequisites (WSL2 + Kali Linux + Node.js)
 
-### Requisitos Previos
-- Node.js 20 LTS o superior.
-- npm o pnpm.
-- El backend de **The Guardian of Kali** ejecutándose en `http://127.0.0.1:8765`.
+To run the desktop application, ensure your environment meets the following requirements:
 
-### Instalación
+1. **Windows 10/11 with WSL2 & Kali Linux**:
+   - Ensure WSL2 is installed:
+     ```powershell
+     wsl --install -d kali-linux
+     ```
+   - Ensure the operator user `carlos` and AI restricted user `ia-user` are configured.
+2. **Node.js**:
+   - Node.js **20 LTS** or higher installed on Windows.
+   - npm (bundled with Node.js) or pnpm.
+3. **Backend Service Running**:
+   - The Guardian of Kali FastAPI backend service must be running locally on `http://127.0.0.1:8765`.
+
+---
+
+## 📦 Installation Steps
+
+1. **Clone the Repository**:
+   ```bash
+   git clone https://github.com/simviz12/the-guardian-of-kali_frontend.git
+   cd the-guardian-of-kali_frontend
+   ```
+
+2. **Install Dependencies**:
+   ```bash
+   npm install
+   ```
+
+3. **Configure Environment Variables (Optional)**:
+   ```powershell
+   copy .env.example .env
+   ```
+
+---
+
+## 🔑 Secure API Key Configuration
+
+> [!IMPORTANT]
+> **No Frontend Secrets**: The frontend desktop application connects to the local FastAPI backend on `127.0.0.1:8765`. **Never** store secret credentials, Anthropic Claude API keys, or private tokens inside frontend code, environment variables, or localStorage.
+
+- The Anthropic API key is strictly maintained and consumed by the **backend service** (`the-guardian-of-kali_backend`) via the system environment variable `ANTHROPIC_API_KEY`.
+- Frontend communications only handle operational parameters:
+  - `VITE_BACKEND_URL`: URL of the local FastAPI backend (default: `http://127.0.0.1:8765`).
+  - `VITE_API_TIMEOUT_MS`: Network request timeout (default: `30000` ms).
+
+---
+
+## 🚀 Quickstart Guide
+
+### Starting the Application
+1. Ensure your backend is running:
+   ```powershell
+   # In the backend repository:
+   python -m src.main
+   ```
+2. Start the desktop frontend in development mode:
+   ```powershell
+   npm run dev
+   ```
+   Or launch the full Electron desktop window:
+   ```powershell
+   npm run build
+   npx electron .
+   ```
+
+### Operating Modes: Suggestion vs Autonomous
+
+When starting a session on the **Session Setup** screen, select your desired operating mode:
+
+| Mode | Autonomous Execution | Required Operator Action | Recommendation |
+| :--- | :--- | :--- | :--- |
+| **Suggestion Mode** (`is_autonomous=False`) | Only **LOW** risk commands (e.g. `whois`, `dig`, `ping`) auto-execute. | **MEDIUM** and **HIGH** risk commands require explicit operator confirmation before execution. | Recommended for beginners, CTF training, and sensitive security assessments where manual human validation is mandatory. |
+| **Autonomous Mode** (`is_autonomous=True`) | **LOW** and **MEDIUM** risk commands (e.g. `nmap -sV`, `gobuster`, `nikto`) auto-execute without prompting. | **HIGH** risk commands (e.g. `sqlmap`, `hydra`, `msfconsole`) **always** pause and require explicit operator confirmation. | Recommended for experienced security engineers conducting rapid reconnaissance workflows. |
+
+> [!NOTE]
+> Regardless of mode, commands matching destructive blacklist patterns (`rm -rf /`, `mkfs`, `fdisk`, `shutdown`, `sudo nmap --script`) are **permanently blocked** by the policy engine with `HTTP 403 Forbidden`.
+
+### Policy Indicator Colors & Threat Matrix
+
+The visual `PolicyIndicator` badge provides real-time security feedback:
+
+| Color | Badge Label | Risk Level | Description & Examples | Action |
+| :---: | :--- | :---: | :--- | :--- |
+| 🟢 **Green** | `LOW` | Low Risk | Passive reconnaissance, DNS lookups, reachability checks (`whois`, `dig`, `nslookup`, `ping`, `uname -s`, `id`). | **Auto-executes** in both modes. |
+| 🟡 **Yellow** | `MEDIUM` | Medium Risk | Active network mapping, port scanning, service enumeration, directory fuzzing (`nmap -sV`, `gobuster`, `dirsearch`, `nikto`, `whatweb`, `sslscan`). | **Requires Confirmation** in Suggestion mode; **Auto-executes** in Autonomous mode. |
+| 🔴 **Red** | `HIGH` | High Risk | Vulnerability exploitation, credential brute-forcing, password cracking, payload delivery (`sqlmap`, `hydra`, `medusa`, `john`, `hashcat`, `msfconsole`). | **Always Requires Confirmation** across all modes. |
+| 🚫 **Black / Dark Red** | `BLOCKED` | Destructive | Mass filesystem deletion (`rm -rf /`), partition formatting (`mkfs`), raw device overwrites (`dd of=/dev/sd*`), host firewall disabling (`iptables -F`), or sudo breakout attempts (`sudo nmap --script`). | **BLOCKED IMMEDIATELY** (never touches terminal shell). |
+
+---
+
+## 🛡️ Architecture & Security Principles
+
+- **Electron IPC Isolation**: Built with `contextIsolation: true` and `nodeIntegration: false`. Terminal PTY streams and backend calls are safely brokered through validated preload bridges.
+- **Zero-Trust Scope Enforcement**: Commands with target IPs or domains outside the session's configured targets are immediately blocked before shell invocation.
+- **Operator Separation**: Manual terminal input is executed under the interactive user `carlos`, while AI-suggested commands execute under the unprivileged `ia-user` with strict sudo whitelist boundaries.
+
+---
+
+## 🛠️ Development & Build Commands
 
 ```bash
-# 1. Clonar el repositorio
-git clone https://github.com/simviz12/the-guardian-of-kali_frontend.git
-cd the-guardian-of-kali_frontend
-
-# 2. Instalar dependencias
-npm install
-
-# 3. Configurar variables de entorno (opcional)
-copy .env.example .env
-
-# 4. Iniciar en modo desarrollo
+# Start local Vite development server
 npm run dev
 
-# 5. Compilar TypeScript y empaquetar con Vite
+# Type check TypeScript and bundle for production
 npm run build
 
-# 6. Ejecutar linter de código
+# Run ESLint to verify code quality
 npm run lint
 ```
 
 ---
 
-## 🔒 Consideraciones de Seguridad
+## 📄 License
 
-- **Context Isolation Activado**: La comunicación entre el proceso de renderizado y el proceso principal de Electron se realiza mediante scripts de precarga seguros (`preload.js`) con `contextIsolation: true` y `nodeIntegration: false`.
-- **Restricción CORS**: El backend valida que las peticiones provengan estrictamente de los orígenes locales autorizados de Electron (`localhost:5173`, `app://-`, `file://`).
-
----
-
-## 📄 Licencia
-
-Este proyecto se encuentra bajo la Licencia MIT. Consulta el archivo [LICENSE](LICENSE) para más detalles.
+This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.
