@@ -42,7 +42,10 @@ export interface CommandHistoryItem {
   target: string | null;
   risk_level: string | null;
   timestamp: string;
+  policy_decision?: string | null;
+  result?: string | null;
 }
+
 
 export interface HistoryResponse {
   count: number;
