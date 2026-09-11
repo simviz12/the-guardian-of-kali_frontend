@@ -2,17 +2,32 @@
  * React interactive terminal component powered by xterm.js and the FitAddon.
  * Connected via the secure preload IPC channel to a live Kali Linux WSL2 session.
  */
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Terminal } from '@xterm/xterm';
 import { FitAddon } from '@xterm/addon-fit';
 import '@xterm/xterm/css/xterm.css';
+import { GlobalErrorBanner } from '../common/GlobalErrorBanner';
+import { AppErrorDetails } from '../../types/errors';
 
 export const TerminalView: React.FC = () => {
   const terminalContainerRef = useRef<HTMLDivElement | null>(null);
   const terminalInstanceRef = useRef<Terminal | null>(null);
   const fitAddonRef = useRef<FitAddon | null>(null);
+  const [wslError, setWslError] = useState<AppErrorDetails | null>(null);
 
   useEffect(() => {
+    if (!window.terminalAPI) {
+      setWslError({
+        kind: 'WSL_UNAVAILABLE',
+        title: 'WSL2 Terminal Bridge Unavailable',
+        message: 'The secure native IPC bridge to Kali Linux on WSL2 could not be established.',
+        actionLabel: 'Check WSL Status',
+        actionHint: 'Ensure Electron is running with preload enabled and Kali Linux distribution is installed (wsl -l -v).',
+      });
+      return;
+    }
+    setWslError(null);
+
     if (!terminalContainerRef.current) {
       return;
     }
@@ -102,7 +117,15 @@ export const TerminalView: React.FC = () => {
   }, []);
 
   return (
-    <div className="flex-1 h-full w-full bg-[#0c0e14] p-2 overflow-hidden flex flex-col">
+    <div className="flex-1 h-full w-full bg-[#0c0e14] p-2 overflow-hidden flex flex-col relative">
+      {wslError && (
+        <div className="absolute inset-x-4 top-4 z-20">
+          <GlobalErrorBanner
+            error={wslError}
+            onRetry={() => window.location.reload()}
+          />
+        </div>
+      )}
       <div
         ref={terminalContainerRef}
         className="flex-1 w-full h-full overflow-hidden"
