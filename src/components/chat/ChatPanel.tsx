@@ -5,8 +5,10 @@
  */
 import React, { useState, useRef, useEffect } from 'react';
 import { apiClient, ProposedCommand } from '../../services/apiClient';
+import { PolicyIndicator } from '../policy/PolicyIndicator';
 
 export interface ChatMessage {
+
   id: string;
   sender: 'user' | 'ai';
   text: string;
@@ -167,7 +169,33 @@ export const ChatPanel: React.FC = () => {
             {msg.proposedCommand && (
               <div className="mt-2.5 w-full max-w-[90%] rounded-lg border border-amber-500/40 bg-zinc-900/90 p-3 shadow-lg">
                 <div className="flex items-center justify-between text-xs font-semibold text-amber-400">
-                  <span>PROPOSED ACTION</span>
+                  <div className="flex items-center space-x-2">
+                    <span>PROPOSED ACTION</span>
+                    <PolicyIndicator
+                      riskLevel={
+                        msg.proposedCommand.text.includes('rm -rf') || msg.proposedCommand.text.includes('mkfs')
+                          ? 'BLOCKED'
+                          : msg.proposedCommand.text.includes('-A') || msg.proposedCommand.text.includes('-sV')
+                          ? 'MEDIUM'
+                          : 'LOW'
+                      }
+                      action={
+                        msg.proposedCommand.text.includes('rm -rf') || msg.proposedCommand.text.includes('mkfs')
+                          ? 'BLOCK'
+                          : msg.proposedCommand.text.includes('-A') || msg.proposedCommand.text.includes('-sV')
+                          ? 'REQUIRE_CONFIRMATION'
+                          : 'AUTO_EXECUTE'
+                      }
+                      reason={
+                        msg.proposedCommand.text.includes('rm -rf')
+                          ? "Blocked by destructive blacklist rule: recursive mass deletion"
+                          : msg.proposedCommand.text.includes('-A') || msg.proposedCommand.text.includes('-sV')
+                          ? "Aggressive service version scanning: requires operator confirmation"
+                          : "Standard non-destructive command authorized under policy engine."
+                      }
+                      size="sm"
+                    />
+                  </div>
                   {msg.proposedCommand.target && (
                     <span className="rounded bg-amber-500/20 px-1.5 py-0.5 text-[10px]">
                       Target: {msg.proposedCommand.target}
