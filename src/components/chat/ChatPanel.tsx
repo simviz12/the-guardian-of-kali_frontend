@@ -7,8 +7,9 @@ import React, { useState, useRef, useEffect } from 'react';
 import { apiClient, ProposedCommand } from '../../services/apiClient';
 import { PolicyIndicator } from '../policy/PolicyIndicator';
 
-export interface ChatMessage {
+import { ActiveSessionConfig } from '../../types/session';
 
+export interface ChatMessage {
   id: string;
   sender: 'user' | 'ai';
   text: string;
@@ -22,7 +23,11 @@ export interface ChatMessage {
   };
 }
 
-export const ChatPanel: React.FC = () => {
+export interface ChatPanelProps {
+  activeSession?: ActiveSessionConfig | null;
+}
+
+export const ChatPanel: React.FC<ChatPanelProps> = ({ activeSession }) => {
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: 'welcome',
@@ -33,8 +38,15 @@ export const ChatPanel: React.FC = () => {
   ]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [sessionId, setSessionId] = useState<string | null>(activeSession?.sessionId || null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (activeSession?.sessionId) {
+      setSessionId(activeSession.sessionId);
+    }
+  }, [activeSession?.sessionId]);
+
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
