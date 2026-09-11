@@ -161,7 +161,15 @@ export const AppContent: React.FC = () => {
           </div>
           {activeTab === 'history' && (
             <div className="h-full w-full p-3">
-              <SessionHistory />
+              <SessionHistory
+                sessionId={activeSession.sessionId}
+                onSelectCommand={(cmdText) => {
+                  setActiveTab('terminal');
+                  if (window.terminalAPI) {
+                    window.terminalAPI.sendInput(cmdText + '\n');
+                  }
+                }}
+              />
             </div>
           )}
         </main>
