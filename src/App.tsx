@@ -1,18 +1,54 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { TerminalView } from './components/terminal/TerminalView';
 import { ChatPanel } from './components/chat/ChatPanel';
 import { SessionHistory } from './components/history/SessionHistory';
 import { SessionSetup } from './components/session/SessionSetup';
+import { ErrorBoundary } from './components/common/ErrorBoundary';
+import { GlobalErrorBanner } from './components/common/GlobalErrorBanner';
+import { apiClient, parseAppError } from './services/apiClient';
 import { ActiveSessionConfig } from './types/session';
+import { AppErrorDetails } from './types/errors';
 
-export const App: React.FC = () => {
+export const AppContent: React.FC = () => {
   const [activeSession, setActiveSession] = useState<ActiveSessionConfig | null>(null);
   const [activeTab, setActiveTab] = useState<'terminal' | 'history'>('terminal');
 
+  // Backend connectivity tracking
+  const [backendStatus, setBackendStatus] = useState<'online' | 'offline' | 'checking'>('checking');
+  const [backendError, setBackendError] = useState<AppErrorDetails | null>(null);
+
+  const checkBackendHealth = useCallback(async () => {
+    const res = await apiClient.checkHealth();
+    if (res.success) {
+      setBackendStatus('online');
+      setBackendError(null);
+    } else {
+      setBackendStatus('offline');
+      setBackendError(parseAppError(res.error));
+    }
+  }, []);
+
+  useEffect(() => {
+    checkBackendHealth();
+    const interval = setInterval(checkBackendHealth, 15000);
+    return () => clearInterval(interval);
+  }, [checkBackendHealth]);
+
   if (!activeSession) {
     return (
-      <div className="flex h-screen w-screen overflow-hidden bg-zinc-950">
-        <SessionSetup onSessionInitialized={(config) => setActiveSession(config)} />
+      <div className="flex h-screen w-screen flex-col overflow-hidden bg-zinc-950">
+        {backendStatus === 'offline' && backendError && (
+          <div className="p-3 bg-zinc-950 border-b border-zinc-800">
+            <GlobalErrorBanner
+              error={backendError}
+              onRetry={checkBackendHealth}
+              compact
+            />
+          </div>
+        )}
+        <div className="flex-1 overflow-hidden">
+          <SessionSetup onSessionInitialized={(config) => setActiveSession(config)} />
+        </div>
       </div>
     );
   }
@@ -41,6 +77,33 @@ export const App: React.FC = () => {
             </span>
             <span className="text-[11px] font-mono text-zinc-400 hidden sm:inline">
               Scope: <span className="text-zinc-200">{activeSession.authorizedTargets.length} target(s)</span>
+            </span>
+
+            {/* Backend Connectivity Status Badge */}
+            <span
+              title={
+                backendStatus === 'online'
+                  ? 'Backend service is reachable (127.0.0.1:8765)'
+                  : 'Backend service is offline'
+              }
+              className={`flex items-center space-x-1 rounded px-1.5 py-0.5 text-[10px] font-mono ${
+                backendStatus === 'online'
+                  ? 'bg-emerald-950/60 text-emerald-400 border border-emerald-800/40'
+                  : backendStatus === 'offline'
+                  ? 'bg-red-950/60 text-red-400 border border-red-800/40 animate-pulse'
+                  : 'bg-zinc-800 text-zinc-400'
+              }`}
+            >
+              <span
+                className={`h-1.5 w-1.5 rounded-full ${
+                  backendStatus === 'online'
+                    ? 'bg-emerald-400'
+                    : backendStatus === 'offline'
+                    ? 'bg-red-400'
+                    : 'bg-zinc-400'
+                }`}
+              />
+              <span>{backendStatus === 'online' ? 'API OK' : 'API OFFLINE'}</span>
             </span>
           </div>
 
@@ -80,6 +143,17 @@ export const App: React.FC = () => {
           </div>
         </header>
 
+        {/* Global Error Banner if backend goes offline during session */}
+        {backendStatus === 'offline' && backendError && (
+          <div className="p-2 border-b border-zinc-800 bg-zinc-950">
+            <GlobalErrorBanner
+              error={backendError}
+              onRetry={checkBackendHealth}
+              compact
+            />
+          </div>
+        )}
+
         {/* Tab Content View */}
         <main className="flex-1 overflow-hidden relative">
           <div className={`h-full w-full ${activeTab === 'terminal' ? 'block' : 'hidden'}`}>
@@ -99,5 +173,12 @@ export const App: React.FC = () => {
   );
 };
 
-export default App;
+export const App: React.FC = () => {
+  return (
+    <ErrorBoundary>
+      <AppContent />
+    </ErrorBoundary>
+  );
+};
 
+export default App;

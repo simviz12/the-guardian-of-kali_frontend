@@ -5,9 +5,11 @@
  * Columns: Time, Command, Origin, Policy Decision, Result.
  */
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { apiClient, CommandHistoryItem, HistoryFilters } from '../../services/apiClient';
+import { apiClient, CommandHistoryItem, HistoryFilters, parseAppError } from '../../services/apiClient';
 import { PolicyIndicator } from '../policy/PolicyIndicator';
+import { GlobalErrorBanner } from '../common/GlobalErrorBanner';
 import { RiskLevel } from '../../types/policy';
+import { AppErrorDetails } from '../../types/errors';
 
 export interface SessionHistoryProps {
   sessionId?: string;
@@ -27,7 +29,7 @@ export const SessionHistory: React.FC<SessionHistoryProps> = ({
   const [totalCount, setTotalCount] = useState<number>(0);
 
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
+  const [errorDetails, setErrorDetails] = useState<AppErrorDetails | null>(null);
 
   // Filter state
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -48,7 +50,7 @@ export const SessionHistory: React.FC<SessionHistoryProps> = ({
   // Fetch history from backend API
   const fetchHistory = useCallback(async () => {
     setIsLoading(true);
-    setError(null);
+    setErrorDetails(null);
 
     const filters: HistoryFilters = {};
     if (sessionId) {
@@ -66,7 +68,7 @@ export const SessionHistory: React.FC<SessionHistoryProps> = ({
       setCommands(result.data.commands || []);
       setTotalCount(result.data.count || 0);
     } else {
-      setError(result.error.message);
+      setErrorDetails(parseAppError(result.error));
     }
   }, [sessionId, selectedRisk]);
 
@@ -292,22 +294,18 @@ export const SessionHistory: React.FC<SessionHistoryProps> = ({
               </tr>
             )}
 
-            {!isLoading && error && (
+            {!isLoading && errorDetails && (
               <tr>
-                <td colSpan={5} className="py-8 text-center text-rose-400">
-                  <p className="font-semibold">Failed to load session history</p>
-                  <p className="text-xs text-zinc-500 mt-1">{error}</p>
-                  <button
-                    onClick={fetchHistory}
-                    className="mt-3 px-3 py-1 bg-zinc-800 hover:bg-zinc-700 rounded text-xs text-zinc-300"
-                  >
-                    Retry
-                  </button>
+                <td colSpan={5} className="p-4">
+                  <GlobalErrorBanner
+                    error={errorDetails}
+                    onRetry={fetchHistory}
+                  />
                 </td>
               </tr>
             )}
 
-            {!isLoading && !error && paginatedCommands.length === 0 && (
+            {!isLoading && !errorDetails && paginatedCommands.length === 0 && (
               <tr>
                 <td colSpan={5} className="py-12 text-center text-zinc-500">
                   <div className="space-y-1">
@@ -323,7 +321,7 @@ export const SessionHistory: React.FC<SessionHistoryProps> = ({
             )}
 
             {!isLoading &&
-              !error &&
+              !errorDetails &&
               paginatedCommands.map((cmd, idx) => {
                 const dateObj = new Date(cmd.timestamp);
                 const formattedTime = isNaN(dateObj.getTime())

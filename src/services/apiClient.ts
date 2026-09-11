@@ -7,14 +7,24 @@
  * - getHistory(filters)
  * - sendMessage(message, sessionId)
  * - checkHealth()
+ * - parseAppError(error)
  */
+import { AppErrorDetails, FieldValidationError } from '../types/errors';
 
 export type ApiResult<T> =
   | { success: true; data: T; error?: never }
   | { success: false; data?: never; error: ApiError };
 
 export interface ApiError {
-  code: 'BACKEND_OFFLINE' | 'TIMEOUT' | 'HTTP_ERROR' | 'INVALID_RESPONSE';
+  code:
+    | 'BACKEND_OFFLINE'
+    | 'TIMEOUT'
+    | 'HTTP_ERROR'
+    | 'INVALID_RESPONSE'
+    | 'CLAUDE_API_FAILURE'
+    | 'VALIDATION_ERROR'
+    | 'WSL_UNAVAILABLE'
+    | 'POLICY_VIOLATION';
   message: string;
   statusCode?: number;
   details?: unknown;
@@ -46,7 +56,6 @@ export interface CommandHistoryItem {
   result?: string | null;
 }
 
-
 export interface HistoryResponse {
   count: number;
   commands: CommandHistoryItem[];
@@ -71,6 +80,164 @@ export interface ChatResponse {
   has_proposed_command: boolean;
   proposed_command: ProposedCommand | null;
   session_id: string;
+}
+
+/**
+ * Intelligent error parser converting raw API/Network/Pydantic errors into
+ * actionable, structured AppErrorDetails.
+ */
+export function parseAppError(error: ApiError | Error | unknown): AppErrorDetails {
+  // If already an ApiError object
+  if (error && typeof error === 'object' && 'code' in error) {
+    const apiErr = error as ApiError;
+    const status = apiErr.statusCode;
+    const rawDetails = apiErr.details;
+    const detailStr =
+      typeof rawDetails === 'string'
+        ? rawDetails
+        : typeof rawDetails === 'object' && rawDetails !== null && 'detail' in rawDetails
+        ? String((rawDetails as Record<string, unknown>).detail)
+        : '';
+
+    // 1. Backend Offline / Network Refusal
+    if (apiErr.code === 'BACKEND_OFFLINE' || apiErr.code === 'TIMEOUT') {
+      return {
+        kind: 'BACKEND_OFFLINE',
+        title: 'FastAPI Backend Offline',
+        message: 'Could not connect to The Guardian of Kali backend service at 127.0.0.1:8765.',
+        actionLabel: 'Retry Connection',
+        actionHint: 'Start the backend via: python -m src.main (or run backend dev service).',
+        statusCode: status,
+        technicalDetails: apiErr.message,
+      };
+    }
+
+    // 2. Pydantic 422 Unprocessable Entity Validation Errors
+    if (status === 422 || apiErr.code === 'VALIDATION_ERROR') {
+      const fieldErrors: FieldValidationError[] = [];
+      if (
+        rawDetails &&
+        typeof rawDetails === 'object' &&
+        'detail' in rawDetails &&
+        Array.isArray((rawDetails as Record<string, unknown>).detail)
+      ) {
+        const rawList = (rawDetails as Record<string, unknown>).detail as Array<{
+          loc?: Array<string | number>;
+          msg?: string;
+          type?: string;
+        }>;
+        for (const item of rawList) {
+          const fieldName = item.loc ? item.loc.filter((x) => x !== 'body').join('.') : 'payload';
+          fieldErrors.push({
+            field: fieldName || 'field',
+            message: item.msg || 'Invalid field constraint',
+            type: item.type,
+          });
+        }
+      }
+
+      const formattedFields = fieldErrors.length
+        ? fieldErrors.map((f) => `\`${f.field}\`: ${f.message}`).join(', ')
+        : 'Request data failed Pydantic schema validation.';
+
+      return {
+        kind: 'VALIDATION_ERROR',
+        title: 'Input Validation Failed',
+        message: `Pydantic schema validation rejected the payload: ${formattedFields}`,
+        actionLabel: 'Correct Input',
+        actionHint: 'Check field formats, required non-empty values, and UUID syntax.',
+        statusCode: 422,
+        fieldErrors,
+        technicalDetails: JSON.stringify(rawDetails, null, 2),
+      };
+    }
+
+    // 3. Claude AI API Failures (429 Rate Limits, 502 Bad Gateway, 503 Service Unavailable)
+    if (
+      status === 429 ||
+      status === 502 ||
+      status === 503 ||
+      detailStr.toLowerCase().includes('claude') ||
+      detailStr.toLowerCase().includes('anthropic') ||
+      detailStr.toLowerCase().includes('rate limit')
+    ) {
+      const isRateLimit = status === 429 || detailStr.toLowerCase().includes('rate limit');
+      return {
+        kind: 'CLAUDE_API_FAILURE',
+        title: isRateLimit ? 'Claude AI Rate Limit Exceeded' : 'Claude AI Service Unavailable',
+        message: detailStr || apiErr.message,
+        actionLabel: isRateLimit ? 'Wait & Retry' : 'Retry Request',
+        actionHint: isRateLimit
+          ? 'Anthropic API rate limit exceeded. Please wait 15-30 seconds before sending another message.'
+          : 'Check your ANTHROPIC_API_KEY environment variable and Anthropic API status.',
+        statusCode: status,
+        technicalDetails: JSON.stringify(rawDetails || apiErr.message, null, 2),
+      };
+    }
+
+    // 4. Zero-Trust Policy Engine Violations (403 Forbidden)
+    if (status === 403 || detailStr.toLowerCase().includes('blocked') || detailStr.toLowerCase().includes('not authorized')) {
+      return {
+        kind: 'POLICY_VIOLATION',
+        title: 'Zero-Trust Security Policy Blocked',
+        message: detailStr || 'Command was blocked by the security policy engine.',
+        actionLabel: 'Review Scope',
+        actionHint: 'Target is outside authorized scope or command matches a destructive blacklist rule.',
+        statusCode: 403,
+        technicalDetails: detailStr,
+      };
+    }
+
+    // 5. WSL Subprocess Failures
+    if (
+      detailStr.toLowerCase().includes('wsl') ||
+      detailStr.toLowerCase().includes('kali-linux') ||
+      detailStr.toLowerCase().includes('distro')
+    ) {
+      return {
+        kind: 'WSL_UNAVAILABLE',
+        title: 'Kali Linux WSL2 Unavailable',
+        message: detailStr || 'Failed to interact with Kali Linux on WSL2.',
+        actionLabel: 'Verify WSL2',
+        actionHint: 'Open PowerShell as Administrator and run: wsl -l -v or wsl --install -d kali-linux.',
+        statusCode: status,
+        technicalDetails: detailStr,
+      };
+    }
+
+    // Generic HTTP error fallback
+    return {
+      kind: 'UNKNOWN_ERROR',
+      title: `Server Error (${status || 'Unknown'})`,
+      message: detailStr || apiErr.message,
+      actionLabel: 'Retry',
+      actionHint: 'Check backend server logs for detailed traceback.',
+      statusCode: status,
+      technicalDetails: JSON.stringify(rawDetails || apiErr.message, null, 2),
+    };
+  }
+
+  // Error instance fallback
+  if (error instanceof Error) {
+    const isOffline = error.message.includes('Failed to fetch') || error.message.includes('NetworkError');
+    return {
+      kind: isOffline ? 'BACKEND_OFFLINE' : 'UNKNOWN_ERROR',
+      title: isOffline ? 'Backend Service Unreachable' : 'Application Runtime Error',
+      message: error.message,
+      actionLabel: 'Retry',
+      actionHint: isOffline
+        ? 'Verify that FastAPI backend is listening on http://127.0.0.1:8765.'
+        : 'Check browser developer tools console for stack trace.',
+      technicalDetails: error.stack,
+    };
+  }
+
+  return {
+    kind: 'UNKNOWN_ERROR',
+    title: 'Unexpected System Error',
+    message: String(error) || 'An unknown error occurred.',
+    actionLabel: 'Retry',
+  };
 }
 
 export class BackendApiClient {
@@ -108,11 +275,25 @@ export class BackendApiClient {
           details = await response.text();
         }
 
+        let code: ApiError['code'] = 'HTTP_ERROR';
+        if (response.status === 422) {
+          code = 'VALIDATION_ERROR';
+        } else if (response.status === 429 || response.status === 502 || response.status === 503) {
+          code = 'CLAUDE_API_FAILURE';
+        } else if (response.status === 403) {
+          code = 'POLICY_VIOLATION';
+        }
+
+        const detailMsg =
+          typeof details === 'object' && details !== null && 'detail' in details
+            ? String((details as Record<string, unknown>).detail)
+            : `Request failed with HTTP status ${response.status}`;
+
         return {
           success: false,
           error: {
-            code: 'HTTP_ERROR',
-            message: `Request failed with HTTP status ${response.status}`,
+            code,
+            message: detailMsg,
             statusCode: response.status,
             details,
           },

@@ -1,13 +1,14 @@
 /**
  * Chat panel component for conversational interaction with the AI assistant.
- * Displays message history (User / AI), text input form, and distinct cards
- * for proposed commands with Execute (POST /execute with origin='AI') and Reject actions.
+ * Displays message history (User / AI), text input form, distinct cards
+ * for proposed commands with Execute/Reject actions, and actionable global error alerts.
  */
 import React, { useState, useRef, useEffect } from 'react';
-import { apiClient, ProposedCommand } from '../../services/apiClient';
+import { apiClient, ProposedCommand, parseAppError } from '../../services/apiClient';
 import { PolicyIndicator } from '../policy/PolicyIndicator';
-
+import { GlobalErrorBanner } from '../common/GlobalErrorBanner';
 import { ActiveSessionConfig } from '../../types/session';
+import { AppErrorDetails } from '../../types/errors';
 
 export interface ChatMessage {
   id: string;
@@ -21,6 +22,7 @@ export interface ChatMessage {
     stderr: string;
     exitCode: number;
   };
+  errorDetails?: AppErrorDetails;
 }
 
 export interface ChatPanelProps {
@@ -39,6 +41,8 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ activeSession }) => {
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [sessionId, setSessionId] = useState<string | null>(activeSession?.sessionId || null);
+  const [activeError, setActiveError] = useState<AppErrorDetails | null>(null);
+  const [lastUserPrompt, setLastUserPrompt] = useState<string>('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -47,33 +51,36 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ activeSession }) => {
     }
   }, [activeSession?.sessionId]);
 
-
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages]);
+  }, [messages, activeError]);
 
-  const handleSendMessage = async (e?: React.FormEvent) => {
+  const handleSendMessage = async (e?: React.FormEvent, retryPrompt?: string) => {
     if (e) e.preventDefault();
-    const trimmed = inputValue.trim();
-    if (!trimmed || isLoading) return;
+    const promptToSend = (retryPrompt || inputValue).trim();
+    if (!promptToSend || isLoading) return;
 
-    const userMessageId = `msg-${Date.now()}`;
-    const userMessage: ChatMessage = {
-      id: userMessageId,
-      sender: 'user',
-      text: trimmed,
-      timestamp: new Date().toLocaleTimeString(),
-    };
+    if (!retryPrompt) {
+      const userMessageId = `msg-${Date.now()}`;
+      const userMessage: ChatMessage = {
+        id: userMessageId,
+        sender: 'user',
+        text: promptToSend,
+        timestamp: new Date().toLocaleTimeString(),
+      };
+      setMessages((prev) => [...prev, userMessage]);
+      setInputValue('');
+    }
 
-    setMessages((prev) => [...prev, userMessage]);
-    setInputValue('');
+    setLastUserPrompt(promptToSend);
+    setActiveError(null);
     setIsLoading(true);
 
-    const result = await apiClient.sendMessage(trimmed, sessionId);
+    const result = await apiClient.sendMessage(promptToSend, sessionId);
 
     setIsLoading(false);
 
@@ -94,11 +101,15 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ activeSession }) => {
 
       setMessages((prev) => [...prev, aiMessage]);
     } else {
+      const parsedError = parseAppError(result.error);
+      setActiveError(parsedError);
+
       const errorMessage: ChatMessage = {
         id: `err-${Date.now()}`,
         sender: 'ai',
-        text: `Error: ${result.error.message}`,
+        text: `⚠️ [${parsedError.title}]: ${parsedError.message}`,
         timestamp: new Date().toLocaleTimeString(),
+        errorDetails: parsedError,
       };
       setMessages((prev) => [...prev, errorMessage]);
     }
@@ -113,10 +124,10 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ activeSession }) => {
 
     const result = await apiClient.executeCommand(cmd.text, cmd.target, 'AI', sessionId);
 
-    setMessages((prev) =>
-      prev.map((msg) => {
-        if (msg.id !== msgId) return msg;
-        if (result.success) {
+    if (result.success) {
+      setMessages((prev) =>
+        prev.map((msg) => {
+          if (msg.id !== msgId) return msg;
           return {
             ...msg,
             executionStatus: 'executed',
@@ -126,19 +137,27 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ activeSession }) => {
               exitCode: result.data.exit_code,
             },
           };
-        } else {
+        })
+      );
+    } else {
+      const parsedError = parseAppError(result.error);
+      setActiveError(parsedError);
+      setMessages((prev) =>
+        prev.map((msg) => {
+          if (msg.id !== msgId) return msg;
           return {
             ...msg,
             executionStatus: 'failed',
             executionResult: {
               stdout: '',
-              stderr: result.error.message,
+              stderr: parsedError.message,
               exitCode: result.error.statusCode || 1,
             },
+            errorDetails: parsedError,
           };
-        }
-      })
-    );
+        })
+      );
+    }
   };
 
   const handleRejectCommand = (msgId: string) => {
@@ -171,6 +190,8 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ activeSession }) => {
               className={`max-w-[85%] rounded-lg px-3.5 py-2.5 text-sm ${
                 msg.sender === 'user'
                   ? 'bg-blue-600 text-white'
+                  : msg.errorDetails
+                  ? 'bg-zinc-900 border border-red-500/40 text-red-200'
                   : 'bg-zinc-900 border border-zinc-800 text-zinc-200'
               }`}
             >
@@ -200,10 +221,10 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ activeSession }) => {
                       }
                       reason={
                         msg.proposedCommand.text.includes('rm -rf')
-                          ? "Blocked by destructive blacklist rule: recursive mass deletion"
+                          ? 'Blocked by destructive blacklist rule: recursive mass deletion'
                           : msg.proposedCommand.text.includes('-A') || msg.proposedCommand.text.includes('-sV')
-                          ? "Aggressive service version scanning: requires operator confirmation"
-                          : "Standard non-destructive command authorized under policy engine."
+                          ? 'Aggressive service version scanning: requires operator confirmation'
+                          : 'Standard non-destructive command authorized under policy engine.'
                       }
                       size="sm"
                     />
@@ -280,6 +301,21 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ activeSession }) => {
           <div className="flex items-center space-x-2 text-zinc-500 text-xs">
             <div className="h-2 w-2 rounded-full bg-zinc-500 animate-ping" />
             <span>Guardian is analyzing...</span>
+          </div>
+        )}
+
+        {/* Global Error Alert Banner inside Chat */}
+        {activeError && (
+          <div className="mt-2">
+            <GlobalErrorBanner
+              error={activeError}
+              onRetry={
+                lastUserPrompt
+                  ? () => handleSendMessage(undefined, lastUserPrompt)
+                  : undefined
+              }
+              onDismiss={() => setActiveError(null)}
+            />
           </div>
         )}
 
