@@ -90,16 +90,35 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ activeSession }) => {
         setSessionId(data.session_id);
       }
 
+      const msgId = `ai-${Date.now()}`;
+      const isLowRisk =
+        data.proposed_command &&
+        !data.proposed_command.text.includes('rm -rf') &&
+        !data.proposed_command.text.includes('mkfs') &&
+        !data.proposed_command.text.includes('-A') &&
+        !data.proposed_command.text.includes('-sV');
+
+      const isAutonomous = activeSession?.operationMode === 'autonomous';
+
       const aiMessage: ChatMessage = {
-        id: `ai-${Date.now()}`,
+        id: msgId,
         sender: 'ai',
         text: data.response,
         timestamp: new Date().toLocaleTimeString(),
         proposedCommand: data.has_proposed_command ? data.proposed_command : null,
-        executionStatus: data.has_proposed_command ? 'idle' : undefined,
+        executionStatus: data.has_proposed_command
+          ? isAutonomous && isLowRisk
+            ? 'executing'
+            : 'idle'
+          : undefined,
       };
 
       setMessages((prev) => [...prev, aiMessage]);
+
+      // Auto-execute LOW risk in autonomous mode
+      if (data.has_proposed_command && data.proposed_command && isAutonomous && isLowRisk) {
+        handleExecuteCommand(msgId, data.proposed_command);
+      }
     } else {
       const parsedError = parseAppError(result.error);
       setActiveError(parsedError);
@@ -171,12 +190,32 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ activeSession }) => {
   return (
     <div className="flex h-full w-96 flex-col border-l border-zinc-800 bg-zinc-950 text-white">
       {/* Panel Header */}
-      <div className="flex items-center justify-between border-b border-zinc-800 px-4 py-3">
-        <div className="flex items-center space-x-2">
-          <div className="h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse" />
-          <h2 className="text-sm font-semibold tracking-wide text-zinc-100">Guardian AI Co-pilot</h2>
+      <div className="border-b border-zinc-800 px-4 py-3 space-y-1">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <div className="h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse" />
+            <h2 className="text-sm font-semibold tracking-wide text-zinc-100">Guardian AI Co-pilot</h2>
+          </div>
+          <span className="rounded bg-zinc-800 px-2 py-0.5 text-xs text-zinc-400">Claude 3.5</span>
         </div>
-        <span className="rounded bg-zinc-800 px-2 py-0.5 text-xs text-zinc-400">Claude 3.5</span>
+
+        {/* Active Session Scope & Mode Bar */}
+        {activeSession && (
+          <div className="flex items-center justify-between pt-1 text-[10px] font-mono text-zinc-400 border-t border-zinc-800/60">
+            <span
+              className={
+                activeSession.operationMode === 'autonomous'
+                  ? 'text-amber-400 font-bold'
+                  : 'text-emerald-400 font-bold'
+              }
+            >
+              Mode: {activeSession.operationMode.toUpperCase()}
+            </span>
+            <span>
+              Scope: {activeSession.authorizedTargets.length} target{activeSession.authorizedTargets.length === 1 ? '' : 's'}
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Message List */}

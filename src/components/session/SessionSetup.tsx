@@ -80,6 +80,11 @@ export const SessionSetup: React.FC<SessionSetupProps> = ({
   };
 
   const handleInitializeSession = () => {
+    if (targets.length === 0) {
+      setTargetError('At least one authorized target IP, CIDR, or domain must be defined before initializing.');
+      return;
+    }
+
     // Generate UUID v4 for the session
     const generatedSessionId =
       typeof crypto !== 'undefined' && crypto.randomUUID
@@ -299,11 +304,20 @@ export const SessionSetup: React.FC<SessionSetupProps> = ({
         {/* 4. Action Initialization Button */}
         <div className="flex items-center justify-between pt-4 border-t border-zinc-800">
           <div className="text-xs text-zinc-500">
-            Security Status: <span className="text-emerald-400 font-medium">Policy Engine Active & Armed</span>
+            {targets.length === 0 ? (
+              <span className="text-amber-400 font-medium animate-pulse">
+                ⚠️ Add at least 1 target to define Zero-Trust scope
+              </span>
+            ) : (
+              <span>
+                Security Status: <span className="text-emerald-400 font-medium">Policy Engine Ready & Armed</span>
+              </span>
+            )}
           </div>
           <button
             onClick={handleInitializeSession}
-            className="rounded-lg bg-emerald-600 hover:bg-emerald-500 px-6 py-2.5 text-sm font-bold text-white shadow-lg shadow-emerald-600/20 transition-all hover:shadow-emerald-600/30 active:scale-[0.98]"
+            disabled={targets.length === 0}
+            className="rounded-lg bg-emerald-600 hover:bg-emerald-500 disabled:bg-zinc-800 disabled:text-zinc-500 disabled:cursor-not-allowed px-6 py-2.5 text-sm font-bold text-white shadow-lg shadow-emerald-600/20 disabled:shadow-none transition-all hover:shadow-emerald-600/30 active:scale-[0.98]"
           >
             Initialize Secure Session →
           </button>
