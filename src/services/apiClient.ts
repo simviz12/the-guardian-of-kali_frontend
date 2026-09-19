@@ -245,7 +245,7 @@ export class BackendApiClient {
   private readonly baseUrl: string;
   private readonly timeoutMs: number;
 
-  constructor(baseUrl: string = 'http://127.0.0.1:8765', timeoutMs: number = 30000) {
+  constructor(baseUrl: string = 'http://127.0.0.1:8765', timeoutMs: number = 185000) {
     this.baseUrl = baseUrl.replace(/\/+$/, '');
     this.timeoutMs = timeoutMs;
   }
