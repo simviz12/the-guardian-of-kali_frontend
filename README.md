@@ -1,4 +1,4 @@
-﻿# The Guardian of Kali 🐉
+# The Guardian of Kali 🐉
 
 The Guardian of Kali es un **Co-piloto de Seguridad Defensiva y Ofensiva** impulsado por Inteligencia Artificial (Gemini 2.5). Esta aplicación de escritorio funciona como un puente orquestador entre una interfaz gráfica moderna y el subsistema de Kali Linux (WSL2), permitiendo ejecutar auditorías de ciberseguridad asistidas por IA.
 
@@ -33,14 +33,24 @@ Para ejecutar esta aplicación en cualquier computador (ej. Computador del profe
 3. Kali Linux instalado en WSL: Abrir PowerShell como administrador y ejecutar `wsl --install -d kali-linux`.
 4. Dependencias de Kali: Entrar a la consola de Kali y ejecutar `sudo apt update && sudo apt install -y kali-tools-top10`.
 
-### Pasos para iniciar el sistema:
-1. Asegúrese de que la carpeta del frontend (`the-guardian-of-kali_frontend`) y la del backend (`the-guardian-of-kali_backend`) estén en el mismo directorio principal.
-2. **En el Backend:** 
-   - Abra una consola, cree un entorno virtual: `python -m venv .venv`
-   - Instale las dependencias: `pip install -r requirements.txt`
-3. **En el Frontend:**
-   - Abra otra consola e instale las dependencias: `npm install`
-   - Inicie la aplicación nativa: `npm run start` (Esto abrirá la ventana de Electron y levantará el servidor backend automáticamente).
+### ⚡ Vía Rápida de Instalación (Solo 3 Comandos)
+Para desplegar todo el ecosistema (Clonar, Instalar y Ejecutar) en una máquina nueva, abre PowerShell y copia estos tres comandos en orden:
+
+**Comando 1: Descargar el código fuente**
+```powershell
+git clone https://github.com/simviz12/the-guardian-of-kali_frontend.git ; git clone https://github.com/simviz12/the-guardian-of-kali_backend.git
+```
+
+**Comando 2: Instalar dependencias (Node y Python)**
+```powershell
+cd the-guardian-of-kali_frontend ; npm install ; cd ../the-guardian-of-kali_backend ; python -m venv .venv ; .\.venv\Scripts\pip install -r requirements.txt ; cd ..
+```
+
+**Comando 3: Encender el sistema**
+```powershell
+.\the-guardian-of-kali_frontend\Iniciar_Guardian.bat
+```
+*(También puedes darle doble clic directamente al archivo `Iniciar_Guardian.bat` desde el Explorador de Archivos).*
 
 ---
 
