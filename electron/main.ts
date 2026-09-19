@@ -6,11 +6,26 @@ import { app, BrowserWindow } from 'electron';
 import * as path from 'path';
 import { fileURLToPath } from 'url';
 import { WslTerminalBridge } from './pty/wsl_terminal_bridge.js';
+import { spawn, ChildProcess } from 'child_process';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 let terminalBridge: WslTerminalBridge | null = null;
+let backendProcess: ChildProcess | null = null;
+
+function startBackend() {
+  const backendDir = 'C:\\Users\\usuario\\Desktop\\tarea_imposible\\the-guardian-of-kali_backend';
+  const pythonExe = path.join(backendDir, '.venv', 'Scripts', 'python.exe');
+  
+  backendProcess = spawn(pythonExe, ['-m', 'src.main'], {
+    cwd: backendDir,
+    detached: false
+  });
+
+  backendProcess.stdout?.on('data', (data) => console.log(`Backend: ${data}`));
+  backendProcess.stderr?.on('data', (data) => console.error(`Backend Error: ${data}`));
+}
 
 function createWindow(): void {
   const mainWindow = new BrowserWindow({
@@ -44,12 +59,18 @@ function createWindow(): void {
   }
 }
 
-app.whenReady().then(createWindow);
+app.whenReady().then(() => {
+  startBackend();
+  createWindow();
+});
 
 app.on('window-all-closed', () => {
   if (terminalBridge) {
     terminalBridge.cleanup();
     terminalBridge = null;
+  }
+  if (backendProcess) {
+    backendProcess.kill();
   }
   if (process.platform !== 'darwin') {
     app.quit();

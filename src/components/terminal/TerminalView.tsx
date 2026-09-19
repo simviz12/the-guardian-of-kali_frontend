@@ -6,7 +6,6 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Terminal } from '@xterm/xterm';
 import { FitAddon } from '@xterm/addon-fit';
 import '@xterm/xterm/css/xterm.css';
-import { GlobalErrorBanner } from '../common/GlobalErrorBanner';
 import { AppErrorDetails } from '../../types/errors';
 
 export const TerminalView: React.FC = () => {
@@ -116,14 +115,38 @@ export const TerminalView: React.FC = () => {
     };
   }, []);
 
+  const [bannerDismissed, setBannerDismissed] = useState<boolean>(false);
+
   return (
-    <div className="flex-1 h-full w-full bg-[#0c0e14] p-2 overflow-hidden flex flex-col relative">
-      {wslError && (
-        <div className="absolute inset-x-4 top-4 z-20">
-          <GlobalErrorBanner
-            error={wslError}
-            onRetry={() => window.location.reload()}
-          />
+    <div className="flex-1 h-full w-full bg-[#0c0e14] p-3 overflow-hidden flex flex-col relative">
+      {wslError && !bannerDismissed && (
+        <div className="absolute inset-x-4 top-4 z-20 shadow-2xl">
+          <div className="rounded-xl border border-amber-500/40 bg-zinc-900/95 p-4 text-zinc-100 backdrop-blur-md flex items-start justify-between gap-4">
+            <div className="flex items-start space-x-3.5">
+              <span className="text-2xl">🐧</span>
+              <div>
+                <div className="flex items-center space-x-2">
+                  <h3 className="text-sm font-bold text-zinc-100">Modo Navegador Web Activo</h3>
+                  <span className="rounded bg-amber-500/20 px-2 py-0.5 text-[10px] font-mono text-amber-300 font-bold border border-amber-500/30">
+                    Vista Previa Web
+                  </span>
+                </div>
+                <p className="mt-1 text-xs text-zinc-300 leading-relaxed">
+                  Los comandos de escaneo y pruebas que propone el <strong>Copiloto Gemini</strong> se ejecutan y devuelven su salida en la tarjeta del chat y en la pestaña <strong>Session History</strong>.
+                </p>
+                <p className="mt-1.5 text-[11px] text-zinc-400 font-mono">
+                  Para tener la terminal interactiva con acceso directo a la shell de Kali Linux en WSL2, abre una terminal y escribe: <code className="text-emerald-400 bg-zinc-950 px-1.5 py-0.5 rounded">npm start</code>
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => setBannerDismissed(true)}
+              className="text-zinc-400 hover:text-white text-lg font-bold px-2 py-1 transition"
+              title="Cerrar aviso"
+            >
+              ×
+            </button>
+          </div>
         </div>
       )}
       <div

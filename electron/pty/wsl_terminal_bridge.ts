@@ -70,6 +70,7 @@ export class WslTerminalBridge {
    */
   private registerIpcHandlers(): void {
     ipcMain.on('terminal:input', this.handleTerminalInput);
+    ipcMain.on('terminal:direct-write', this.handleTerminalDirectWrite);
     ipcMain.on('terminal:resize', this.handleTerminalResize);
     ipcMain.on('terminal:close', this.handleTerminalClose);
   }
@@ -77,6 +78,12 @@ export class WslTerminalBridge {
   private handleTerminalInput = (_: IpcMainEvent, data: string): void => {
     if (this.ptyProcess) {
       this.ptyProcess.write(data);
+    }
+  };
+
+  private handleTerminalDirectWrite = (_: IpcMainEvent, data: string): void => {
+    if (this.window && !this.window.isDestroyed()) {
+      this.window.webContents.send('terminal:output', data);
     }
   };
 
@@ -102,6 +109,7 @@ export class WslTerminalBridge {
    */
   public cleanup(): void {
     ipcMain.removeListener('terminal:input', this.handleTerminalInput);
+    ipcMain.removeListener('terminal:direct-write', this.handleTerminalDirectWrite);
     ipcMain.removeListener('terminal:resize', this.handleTerminalResize);
     ipcMain.removeListener('terminal:close', this.handleTerminalClose);
 

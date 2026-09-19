@@ -12,6 +12,7 @@ import { AppErrorDetails } from '../../types/errors';
 
 export interface ChatMessage {
   id: string;
+  dbId?: number;
   sender: 'user' | 'ai';
   text: string;
   timestamp: string;
@@ -30,26 +31,74 @@ export interface ChatPanelProps {
 }
 
 export const ChatPanel: React.FC<ChatPanelProps> = ({ activeSession }) => {
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    {
-      id: 'welcome',
-      sender: 'ai',
-      text: 'Hello Operator! I am The Guardian of Kali. How can I assist with your ethical hacking or CTF challenge today?',
-      timestamp: new Date().toLocaleTimeString(),
-    },
-  ]);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [sessionId, setSessionId] = useState<string | null>(activeSession?.sessionId || null);
+  const [sessionId, setSessionId] = useState<string | null>(
+    () => activeSession?.sessionId || localStorage.getItem('guardian-session-id') || null
+  );
   const [activeError, setActiveError] = useState<AppErrorDetails | null>(null);
   const [lastUserPrompt, setLastUserPrompt] = useState<string>('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  // Persist sessionId to localStorage whenever it changes
   useEffect(() => {
     if (activeSession?.sessionId) {
       setSessionId(activeSession.sessionId);
+      localStorage.setItem('guardian-session-id', activeSession.sessionId);
     }
   }, [activeSession?.sessionId]);
+
+  useEffect(() => {
+    if (sessionId) {
+      localStorage.setItem('guardian-session-id', sessionId);
+    }
+  }, [sessionId]);
+
+  // Load chat history from backend on mount
+  useEffect(() => {
+    const loadHistory = async () => {
+      const sid = activeSession?.sessionId || localStorage.getItem('guardian-session-id');
+      if (!sid) {
+        // No session yet — show welcome
+        setMessages([{
+          id: 'welcome',
+          sender: 'ai',
+          text: '¡Hola Operador! Soy The Guardian of Kali. ¿En qué puedo ayudarte hoy con tu laboratorio o desafío de ciberseguridad / CTF?',
+          timestamp: new Date().toLocaleTimeString(),
+        }]);
+        return;
+      }
+
+      const result = await apiClient.getChatMessages(sid);
+      if (result.success && result.data.messages.length > 0) {
+        const loaded: ChatMessage[] = result.data.messages.map((m) => ({
+          id: `db-${m.id}`,
+          dbId: m.id,
+          sender: m.sender as 'user' | 'ai',
+          text: m.text,
+          timestamp: new Date(m.timestamp).toLocaleTimeString(),
+          proposedCommand: m.proposed_command_text
+            ? { text: m.proposed_command_text, target: m.proposed_command_target, origin: 'AI' as const }
+            : null,
+          executionStatus: (m.execution_status as ChatMessage['executionStatus']) || undefined,
+          executionResult: m.execution_stdout != null
+            ? { stdout: m.execution_stdout || '', stderr: m.execution_stderr || '', exitCode: m.execution_exit_code ?? 0 }
+            : undefined,
+        }));
+        setMessages(loaded);
+      } else {
+        setMessages([{
+          id: 'welcome',
+          sender: 'ai',
+          text: '¡Hola Operador! Soy The Guardian of Kali. ¿En qué puedo ayudarte hoy con tu laboratorio o desafío de ciberseguridad / CTF?',
+          timestamp: new Date().toLocaleTimeString(),
+        }]);
+      }
+    };
+
+    loadHistory();
+  }, []);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -80,12 +129,31 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ activeSession }) => {
     setActiveError(null);
     setIsLoading(true);
 
-    const result = await apiClient.sendMessage(promptToSend, sessionId);
+    const currentSessionId = sessionId;
+    const targetsList = activeSession?.authorizedTargets?.map((t) => t.value) || [];
+
+    // Save user message to DB
+    if (!retryPrompt && currentSessionId) {
+      apiClient.saveChatMessage({
+        session_id: currentSessionId,
+        sender: 'user',
+        text: promptToSend,
+        timestamp: new Date().toISOString(),
+      });
+    }
+
+    const result = await apiClient.sendMessage(
+      promptToSend,
+      sessionId,
+      targetsList,
+      activeSession?.operationMode || 'suggestion'
+    );
 
     setIsLoading(false);
 
     if (result.success) {
       const data = result.data;
+      const activeSessionId = data.session_id || currentSessionId;
       if (data.session_id) {
         setSessionId(data.session_id);
       }
@@ -115,6 +183,26 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ activeSession }) => {
 
       setMessages((prev) => [...prev, aiMessage]);
 
+      // Save AI message to DB
+      if (activeSessionId) {
+        apiClient.saveChatMessage({
+          session_id: activeSessionId,
+          sender: 'ai',
+          text: data.response,
+          proposed_command_text: data.proposed_command?.text ?? null,
+          proposed_command_target: data.proposed_command?.target ?? null,
+          execution_status: data.has_proposed_command ? (isAutonomous && isLowRisk ? 'executing' : 'idle') : null,
+          timestamp: new Date().toISOString(),
+        }).then((saveResult) => {
+          if (saveResult.success) {
+            // Attach dbId to the AI message so we can update it after execution
+            setMessages((prev) =>
+              prev.map((m) => m.id === msgId ? { ...m, dbId: saveResult.data.message_id } : m)
+            );
+          }
+        });
+      }
+
       // Auto-execute LOW risk in autonomous mode
       if (data.has_proposed_command && data.proposed_command && isAutonomous && isLowRisk) {
         handleExecuteCommand(msgId, data.proposed_command);
@@ -134,6 +222,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ activeSession }) => {
     }
   };
 
+
   const handleExecuteCommand = async (msgId: string, cmd: ProposedCommand) => {
     setMessages((prev) =>
       prev.map((msg) =>
@@ -141,8 +230,11 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ activeSession }) => {
       )
     );
 
-    const result = await apiClient.executeCommand(cmd.text, cmd.target, 'AI', sessionId);
+    if (window.terminalAPI && (window as any).terminalAPI.writeOutput) {
+      (window as any).terminalAPI.writeOutput(`\r\n\x1b[1;36m[Guardian AI]\x1b[0m Ejecutando tarea en background: \x1b[33m${cmd.text}\x1b[0m\r\n`);
+    }
 
+    const result = await apiClient.executeCommand(cmd.text, cmd.target, 'AI', sessionId);
     if (result.success) {
       setMessages((prev) =>
         prev.map((msg) => {
@@ -158,6 +250,30 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ activeSession }) => {
           };
         })
       );
+
+      if (window.terminalAPI && (window as any).terminalAPI.writeOutput) {
+        let terminalOut = result.data.stdout.replace(/\n/g, '\r\n');
+        if (result.data.stderr) {
+           terminalOut += `\x1b[31m${result.data.stderr.replace(/\n/g, '\r\n')}\x1b[0m`;
+        }
+        (window as any).terminalAPI.writeOutput(`\x1b[1;32m[OK]\x1b[0m Tarea completada con código ${result.data.exit_code}\r\n${terminalOut}\r\n`);
+      }
+
+      // Persist execution result to DB if we have dbId
+      const msgWithDb = messages.find((m) => m.id === msgId);
+      if (msgWithDb?.dbId) {
+        apiClient.updateChatMessage(msgWithDb.dbId, {
+          execution_status: 'executed',
+          execution_stdout: result.data.stdout,
+          execution_stderr: result.data.stderr,
+          execution_exit_code: result.data.exit_code,
+        });
+      }
+
+      // Automáticamente pedirle a la IA que analice el resultado
+      const analysisPrompt = `He ejecutado el comando '${cmd.text}'.\nCódigo de salida: ${result.data.exit_code}\n\nSalida:\n${result.data.stdout || '(sin salida)'}\n\nPor favor, analiza este resultado y dime qué significa o cuáles son los siguientes pasos.`;
+      handleSendMessage(undefined, analysisPrompt);
+
     } else {
       const parsedError = parseAppError(result.error);
       setActiveError(parsedError);
@@ -176,6 +292,10 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ activeSession }) => {
           };
         })
       );
+
+      if (window.terminalAPI && (window as any).terminalAPI.writeOutput) {
+        (window as any).terminalAPI.writeOutput(`\x1b[1;31m[ERROR]\x1b[0m La tarea falló: ${parsedError.message}\r\n`);
+      }
     }
   };
 
@@ -188,15 +308,15 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ activeSession }) => {
   };
 
   return (
-    <div className="flex h-full w-96 flex-col border-l border-zinc-800 bg-zinc-950 text-white">
+    <div className="flex h-full w-[430px] lg:w-[480px] flex-col border-l border-zinc-800 bg-zinc-950 text-white">
       {/* Panel Header */}
-      <div className="border-b border-zinc-800 px-4 py-3 space-y-1">
+      <div className="border-b border-zinc-800 px-5 py-3.5 space-y-1.5">
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <div className="h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse" />
-            <h2 className="text-sm font-semibold tracking-wide text-zinc-100">Guardian AI Co-pilot</h2>
+          <div className="flex items-center space-x-2.5">
+            <div className="h-3 w-3 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_#10b981]" />
+            <h2 className="text-base font-bold tracking-wide text-zinc-100">Guardian AI Co-pilot</h2>
           </div>
-          <span className="rounded bg-zinc-800 px-2 py-0.5 text-xs text-zinc-400">Claude 3.5</span>
+          <span className="rounded-md bg-zinc-800 px-2.5 py-1 text-xs font-mono text-emerald-400 border border-emerald-500/30 font-bold">Gemini 2.5</span>
         </div>
 
         {/* Active Session Scope & Mode Bar */}
@@ -242,7 +362,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ activeSession }) => {
               <div className="mt-2.5 w-full max-w-[90%] rounded-lg border border-amber-500/40 bg-zinc-900/90 p-3 shadow-lg">
                 <div className="flex items-center justify-between text-xs font-semibold text-amber-400">
                   <div className="flex items-center space-x-2">
-                    <span>PROPOSED ACTION</span>
+                    <span>ACCIÓN PROPUESTA</span>
                     <PolicyIndicator
                       riskLevel={
                         msg.proposedCommand.text.includes('rm -rf') || msg.proposedCommand.text.includes('mkfs')
@@ -260,17 +380,17 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ activeSession }) => {
                       }
                       reason={
                         msg.proposedCommand.text.includes('rm -rf')
-                          ? 'Blocked by destructive blacklist rule: recursive mass deletion'
+                          ? 'Bloqueado por regla de lista negra destructiva: eliminación masiva recursiva'
                           : msg.proposedCommand.text.includes('-A') || msg.proposedCommand.text.includes('-sV')
-                          ? 'Aggressive service version scanning: requires operator confirmation'
-                          : 'Standard non-destructive command authorized under policy engine.'
+                          ? 'Escaneo de versiones agresivo: requiere confirmación del operador'
+                          : 'Comando estándar no destructivo autorizado bajo el motor de políticas.'
                       }
                       size="sm"
                     />
                   </div>
                   {msg.proposedCommand.target && (
                     <span className="rounded bg-amber-500/20 px-1.5 py-0.5 text-[10px]">
-                      Target: {msg.proposedCommand.target}
+                      Objetivo: {msg.proposedCommand.target}
                     </span>
                   )}
                 </div>
@@ -287,38 +407,38 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ activeSession }) => {
                         onClick={() => handleRejectCommand(msg.id)}
                         className="rounded bg-zinc-800 px-2.5 py-1 text-xs font-medium text-zinc-300 hover:bg-zinc-700 transition"
                       >
-                        Reject
+                        Rechazar
                       </button>
                       <button
                         onClick={() => handleExecuteCommand(msg.id, msg.proposedCommand!)}
                         className="rounded bg-emerald-600 px-3 py-1 text-xs font-medium text-white hover:bg-emerald-500 transition shadow"
                       >
-                        Execute
+                        Ejecutar
                       </button>
                     </>
                   )}
 
                   {msg.executionStatus === 'executing' && (
                     <span className="text-xs text-amber-400 animate-pulse font-medium">
-                      Executing in WSL2 (ia-user)...
+                      Ejecutando en WSL2 (ia-user)...
                     </span>
                   )}
 
                   {msg.executionStatus === 'executed' && (
                     <span className="rounded bg-emerald-500/20 px-2 py-0.5 text-xs text-emerald-400 font-medium">
-                      ✓ Executed (Exit: {msg.executionResult?.exitCode})
+                      ✓ Ejecutado (Código: {msg.executionResult?.exitCode})
                     </span>
                   )}
 
                   {msg.executionStatus === 'rejected' && (
                     <span className="rounded bg-zinc-800 px-2 py-0.5 text-xs text-zinc-500">
-                      ✕ Rejected by Operator
+                      ✕ Rechazado por el Operador
                     </span>
                   )}
 
                   {msg.executionStatus === 'failed' && (
                     <span className="rounded bg-rose-500/20 px-2 py-0.5 text-xs text-rose-400 font-medium">
-                      ⚠ Execution Failed
+                      ⚠ Falló la Ejecución
                     </span>
                   )}
                 </div>
@@ -339,7 +459,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ activeSession }) => {
         {isLoading && (
           <div className="flex items-center space-x-2 text-zinc-500 text-xs">
             <div className="h-2 w-2 rounded-full bg-zinc-500 animate-ping" />
-            <span>Guardian is analyzing...</span>
+            <span>Guardian está analizando...</span>
           </div>
         )}
 
@@ -362,22 +482,22 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ activeSession }) => {
       </div>
 
       {/* Input Form */}
-      <form onSubmit={handleSendMessage} className="border-t border-zinc-800 p-3">
-        <div className="flex space-x-2">
+      <form onSubmit={handleSendMessage} className="border-t border-zinc-800 p-4 bg-zinc-900/50">
+        <div className="flex space-x-2.5">
           <input
             type="text"
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
-            placeholder="Ask Guardian (e.g. How to scan ports?)..."
+            placeholder="Pregunta a Guardian (ej. ¿Cómo escanear puertos?)..."
             disabled={isLoading}
-            className="flex-1 rounded-md border border-zinc-800 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 placeholder-zinc-500 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-50"
+            className="flex-1 rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-sm md:text-base text-zinc-100 placeholder-zinc-500 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-50 transition font-sans"
           />
           <button
             type="submit"
             disabled={isLoading || !inputValue.trim()}
-            className="rounded-md bg-blue-600 px-3.5 py-2 text-sm font-medium text-white hover:bg-blue-500 disabled:opacity-40 disabled:cursor-not-allowed transition"
+            className="rounded-xl bg-blue-600 px-5 py-3 text-sm md:text-base font-bold text-white hover:bg-blue-500 disabled:opacity-40 disabled:cursor-not-allowed transition shadow-md active:scale-95 cursor-pointer"
           >
-            Send
+            Enviar
           </button>
         </div>
       </form>

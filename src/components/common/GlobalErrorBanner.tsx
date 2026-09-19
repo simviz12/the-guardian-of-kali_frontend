@@ -103,14 +103,14 @@ export const GlobalErrorBanner: React.FC<GlobalErrorBannerProps> = ({
               onClick={onRetry}
               className={`rounded px-2 py-0.5 text-xs font-medium transition ${theme.button}`}
             >
-              {error.actionLabel || 'Retry'}
+              {error.actionLabel || 'Reintentar'}
             </button>
           )}
           {onDismiss && (
             <button
               onClick={onDismiss}
               className="text-zinc-400 hover:text-white px-1"
-              title="Dismiss"
+              title="Cerrar"
             >
               ✕
             </button>
@@ -147,7 +147,7 @@ export const GlobalErrorBanner: React.FC<GlobalErrorBannerProps> = ({
             {/* Action Hint */}
             {error.actionHint && (
               <div className="mt-2.5 rounded bg-black/40 p-2 border border-zinc-800 font-mono text-[11px] text-zinc-300">
-                <span className={`font-bold mr-1 ${theme.accent}`}>Recommendation:</span>
+                <span className={`font-bold mr-1 ${theme.accent}`}>Recomendación:</span>
                 <code>{error.actionHint}</code>
               </div>
             )}
@@ -156,7 +156,7 @@ export const GlobalErrorBanner: React.FC<GlobalErrorBannerProps> = ({
             {error.fieldErrors && error.fieldErrors.length > 0 && (
               <div className="mt-2 space-y-1">
                 <span className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider">
-                  Validation details:
+                  Detalles de validación:
                 </span>
                 <ul className="list-disc list-inside text-xs space-y-0.5 text-zinc-300 font-mono">
                   {error.fieldErrors.map((fe, idx) => (
@@ -177,14 +177,14 @@ export const GlobalErrorBanner: React.FC<GlobalErrorBannerProps> = ({
               onClick={onRetry}
               className={`rounded-md px-3 py-1.5 text-xs font-semibold shadow transition ${theme.button}`}
             >
-              {error.actionLabel || 'Retry'}
+              {error.actionLabel || 'Reintentar'}
             </button>
           )}
           {onDismiss && (
             <button
               onClick={onDismiss}
               className="text-zinc-400 hover:text-zinc-100 p-1 text-sm rounded hover:bg-white/5 transition"
-              title="Dismiss alert"
+              title="Cerrar alerta"
             >
               ✕
             </button>
@@ -199,7 +199,7 @@ export const GlobalErrorBanner: React.FC<GlobalErrorBannerProps> = ({
             onClick={() => setShowTechnicalDetails(!showTechnicalDetails)}
             className="text-[11px] font-mono text-zinc-400 hover:text-zinc-200 underline transition"
           >
-            {showTechnicalDetails ? '▼ Hide technical details' : '▶ Show technical details'}
+            {showTechnicalDetails ? '▼ Ocultar detalles técnicos' : '▶ Mostrar detalles técnicos'}
           </button>
           {showTechnicalDetails && (
             <pre className="mt-2 p-2 bg-black/60 rounded text-[10px] font-mono text-zinc-400 max-h-32 overflow-y-auto whitespace-pre-wrap border border-zinc-800">

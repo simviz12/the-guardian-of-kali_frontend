@@ -103,10 +103,10 @@ export function parseAppError(error: ApiError | Error | unknown): AppErrorDetail
     if (apiErr.code === 'BACKEND_OFFLINE' || apiErr.code === 'TIMEOUT') {
       return {
         kind: 'BACKEND_OFFLINE',
-        title: 'FastAPI Backend Offline',
-        message: 'Could not connect to The Guardian of Kali backend service at 127.0.0.1:8765.',
-        actionLabel: 'Retry Connection',
-        actionHint: 'Start the backend via: python -m src.main (or run backend dev service).',
+        title: 'Backend FastAPI Desconectado',
+        message: 'No se pudo conectar con el servicio backend de The Guardian of Kali en 127.0.0.1:8765.',
+        actionLabel: 'Reintentar Conexión',
+        actionHint: 'Inicia el backend ejecutando: python -m src.main (o verifica el servicio).',
         statusCode: status,
         technicalDetails: apiErr.message,
       };
@@ -129,8 +129,8 @@ export function parseAppError(error: ApiError | Error | unknown): AppErrorDetail
         for (const item of rawList) {
           const fieldName = item.loc ? item.loc.filter((x) => x !== 'body').join('.') : 'payload';
           fieldErrors.push({
-            field: fieldName || 'field',
-            message: item.msg || 'Invalid field constraint',
+            field: fieldName || 'campo',
+            message: item.msg || 'Restricción de campo inválida',
             type: item.type,
           });
         }
@@ -138,38 +138,39 @@ export function parseAppError(error: ApiError | Error | unknown): AppErrorDetail
 
       const formattedFields = fieldErrors.length
         ? fieldErrors.map((f) => `\`${f.field}\`: ${f.message}`).join(', ')
-        : 'Request data failed Pydantic schema validation.';
+        : 'Los datos enviados no pasaron la validación del esquema.';
 
       return {
         kind: 'VALIDATION_ERROR',
-        title: 'Input Validation Failed',
-        message: `Pydantic schema validation rejected the payload: ${formattedFields}`,
-        actionLabel: 'Correct Input',
-        actionHint: 'Check field formats, required non-empty values, and UUID syntax.',
+        title: 'Error de Validación de Entrada',
+        message: `La validación rechazó los datos: ${formattedFields}`,
+        actionLabel: 'Corregir Entrada',
+        actionHint: 'Verifica los formatos, campos obligatorios y sintaxis de UUID.',
         statusCode: 422,
         fieldErrors,
         technicalDetails: JSON.stringify(rawDetails, null, 2),
       };
     }
 
-    // 3. Claude AI API Failures (429 Rate Limits, 502 Bad Gateway, 503 Service Unavailable)
+    // 3. AI API Failures (429 Rate Limits, 502 Bad Gateway, 503 Service Unavailable)
     if (
       status === 429 ||
       status === 502 ||
       status === 503 ||
       detailStr.toLowerCase().includes('claude') ||
       detailStr.toLowerCase().includes('anthropic') ||
+      detailStr.toLowerCase().includes('gemini') ||
       detailStr.toLowerCase().includes('rate limit')
     ) {
       const isRateLimit = status === 429 || detailStr.toLowerCase().includes('rate limit');
       return {
         kind: 'CLAUDE_API_FAILURE',
-        title: isRateLimit ? 'Claude AI Rate Limit Exceeded' : 'Claude AI Service Unavailable',
+        title: isRateLimit ? 'Límite de Peticiones de IA Excedido' : 'Servicio de IA No Disponible',
         message: detailStr || apiErr.message,
-        actionLabel: isRateLimit ? 'Wait & Retry' : 'Retry Request',
+        actionLabel: isRateLimit ? 'Esperar y Reintentar' : 'Reintentar Petición',
         actionHint: isRateLimit
-          ? 'Anthropic API rate limit exceeded. Please wait 15-30 seconds before sending another message.'
-          : 'Check your ANTHROPIC_API_KEY environment variable and Anthropic API status.',
+          ? 'Límite de tasa alcanzado. Espera 15-30 segundos antes de enviar otro mensaje.'
+          : 'Verifica tu API Key configurada y el estado del servicio de IA.',
         statusCode: status,
         technicalDetails: JSON.stringify(rawDetails || apiErr.message, null, 2),
       };
@@ -179,10 +180,10 @@ export function parseAppError(error: ApiError | Error | unknown): AppErrorDetail
     if (status === 403 || detailStr.toLowerCase().includes('blocked') || detailStr.toLowerCase().includes('not authorized')) {
       return {
         kind: 'POLICY_VIOLATION',
-        title: 'Zero-Trust Security Policy Blocked',
-        message: detailStr || 'Command was blocked by the security policy engine.',
-        actionLabel: 'Review Scope',
-        actionHint: 'Target is outside authorized scope or command matches a destructive blacklist rule.',
+        title: 'Bloqueado por Política de Seguridad Zero-Trust',
+        message: detailStr || 'El comando fue bloqueado por el motor de políticas de seguridad.',
+        actionLabel: 'Revisar Alcance (Scope)',
+        actionHint: 'El objetivo está fuera del alcance autorizado o el comando coincide con una regla destructiva de la lista negra.',
         statusCode: 403,
         technicalDetails: detailStr,
       };
@@ -196,10 +197,10 @@ export function parseAppError(error: ApiError | Error | unknown): AppErrorDetail
     ) {
       return {
         kind: 'WSL_UNAVAILABLE',
-        title: 'Kali Linux WSL2 Unavailable',
-        message: detailStr || 'Failed to interact with Kali Linux on WSL2.',
-        actionLabel: 'Verify WSL2',
-        actionHint: 'Open PowerShell as Administrator and run: wsl -l -v or wsl --install -d kali-linux.',
+        title: 'Kali Linux WSL2 No Disponible',
+        message: detailStr || 'Error al interactuar con Kali Linux en WSL2.',
+        actionLabel: 'Verificar WSL2',
+        actionHint: 'Abre PowerShell como Administrador y ejecuta: wsl -l -v o wsl --install -d kali-linux.',
         statusCode: status,
         technicalDetails: detailStr,
       };
@@ -208,10 +209,10 @@ export function parseAppError(error: ApiError | Error | unknown): AppErrorDetail
     // Generic HTTP error fallback
     return {
       kind: 'UNKNOWN_ERROR',
-      title: `Server Error (${status || 'Unknown'})`,
+      title: `Error del Servidor (${status || 'Desconocido'})`,
       message: detailStr || apiErr.message,
-      actionLabel: 'Retry',
-      actionHint: 'Check backend server logs for detailed traceback.',
+      actionLabel: 'Reintentar',
+      actionHint: 'Revisa los registros del servidor backend para ver el error detallado.',
       statusCode: status,
       technicalDetails: JSON.stringify(rawDetails || apiErr.message, null, 2),
     };
@@ -222,21 +223,21 @@ export function parseAppError(error: ApiError | Error | unknown): AppErrorDetail
     const isOffline = error.message.includes('Failed to fetch') || error.message.includes('NetworkError');
     return {
       kind: isOffline ? 'BACKEND_OFFLINE' : 'UNKNOWN_ERROR',
-      title: isOffline ? 'Backend Service Unreachable' : 'Application Runtime Error',
+      title: isOffline ? 'Servicio Backend No Accesible' : 'Error de Ejecución de la Aplicación',
       message: error.message,
-      actionLabel: 'Retry',
+      actionLabel: 'Reintentar',
       actionHint: isOffline
-        ? 'Verify that FastAPI backend is listening on http://127.0.0.1:8765.'
-        : 'Check browser developer tools console for stack trace.',
+        ? 'Verifica que el backend de FastAPI esté escuchando en http://127.0.0.1:8765.'
+        : 'Revisa la consola del navegador para ver la traza del error.',
       technicalDetails: error.stack,
     };
   }
 
   return {
     kind: 'UNKNOWN_ERROR',
-    title: 'Unexpected System Error',
-    message: String(error) || 'An unknown error occurred.',
-    actionLabel: 'Retry',
+    title: 'Error Inesperado del Sistema',
+    message: String(error) || 'Ocurrió un error desconocido.',
+    actionLabel: 'Reintentar',
   };
 }
 
@@ -383,13 +384,17 @@ export class BackendApiClient {
 
   async sendMessage(
     message: string,
-    sessionId?: string | null
+    sessionId?: string | null,
+    authorizedTargets?: string[] | null,
+    operationMode?: string | null
   ): Promise<ApiResult<ChatResponse>> {
     return this.request<ChatResponse>('/chat', {
       method: 'POST',
       body: JSON.stringify({
         message,
         session_id: sessionId ?? null,
+        authorized_targets: authorizedTargets ?? null,
+        operation_mode: operationMode ?? null,
       }),
     });
   }
@@ -398,6 +403,59 @@ export class BackendApiClient {
     return this.request<{ status: string; service: string; version: string }>('/health', {
       method: 'GET',
     });
+  }
+
+  async saveChatMessage(payload: {
+    session_id: string;
+    sender: 'user' | 'ai';
+    text: string;
+    proposed_command_text?: string | null;
+    proposed_command_target?: string | null;
+    execution_status?: string | null;
+    execution_stdout?: string | null;
+    execution_stderr?: string | null;
+    execution_exit_code?: number | null;
+    timestamp?: string | null;
+  }): Promise<ApiResult<{ message_id: number; ok: boolean }>> {
+    return this.request<{ message_id: number; ok: boolean }>('/chat/message', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  }
+
+  async updateChatMessage(
+    messageId: number,
+    payload: {
+      execution_status: string;
+      execution_stdout: string;
+      execution_stderr: string;
+      execution_exit_code: number;
+    }
+  ): Promise<ApiResult<{ ok: boolean; message_id: number }>> {
+    return this.request<{ ok: boolean; message_id: number }>(`/chat/message/${messageId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(payload),
+    });
+  }
+
+  async getChatMessages(sessionId: string): Promise<ApiResult<{
+    session_id: string;
+    count: number;
+    messages: Array<{
+      id: number;
+      session_id: string;
+      sender: string;
+      text: string;
+      proposed_command_text: string | null;
+      proposed_command_target: string | null;
+      execution_status: string | null;
+      execution_stdout: string | null;
+      execution_stderr: string | null;
+      execution_exit_code: number | null;
+      timestamp: string;
+    }>;
+  }>> {
+    return this.request(`/chat/messages/${sessionId}`, { method: 'GET' });
   }
 }
 
