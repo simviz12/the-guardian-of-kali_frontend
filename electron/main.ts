@@ -4,12 +4,9 @@
  */
 import { app, BrowserWindow } from 'electron';
 import * as path from 'path';
-import { fileURLToPath } from 'url';
+// In CJS, __dirname and __filename are natively available.
 import { WslTerminalBridge } from './pty/wsl_terminal_bridge.js';
 import { spawn, ChildProcess } from 'child_process';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 let terminalBridge: WslTerminalBridge | null = null;
 let backendProcess: ChildProcess | null = null;
