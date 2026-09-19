@@ -12,12 +12,26 @@ Esta es una Aplicación de Escritorio Multi-Capa con la siguiente pila tecnológ
 
 ---
 
+## 🧰 Herramientas Integradas
+El sistema está diseñado para orquestar herramientas de ciberseguridad de grado profesional instaladas de forma nativa en el subsistema subyacente. A través del Co-piloto, el sistema puede invocar:
+- **Reconocimiento y Escaneo:** `nmap`, `netdiscover`, `dig`, `whois`.
+- **Fuzzing y Búsqueda Web:** `dirb`, `gobuster`, `nikto`, `wfuzz`.
+- **Auditoría de Credenciales:** `hydra`, `john` (John the Ripper), `hashcat`.
+- **Análisis de Tráfico:** `tcpdump`, `tshark`.
+
+*(Nota: La aplicación actúa como un Panel de Control. Las herramientas residen en el kernel de Kali Linux conectado).*
+
+---
+
 ## 🚀 Instalación y Despliegue (Modo Desarrollo)
 
-Para ejecutar esta aplicación en cualquier computador (ej. Computador del profesor o laboratorio), se deben cumplir los siguientes requisitos previos:
-1. **Node.js** instalado.
-2. **Python 3.10+** instalado.
-3. **WSL2** instalado y configurado con la distribución `kali-linux`.
+Para ejecutar esta aplicación en cualquier computador (ej. Computador del profesor o laboratorio), se deben cumplir los siguientes requisitos previos. **Es imperativo contar con WSL2 activo, ya que la aplicación no empaqueta un Sistema Operativo completo por razones de arquitectura.**
+
+### Requisitos en la Máquina Anfitriona:
+1. **Node.js** y **Python 3.10+** instalados.
+2. **WSL2** instalado.
+3. Kali Linux instalado en WSL: Abrir PowerShell como administrador y ejecutar `wsl --install -d kali-linux`.
+4. Dependencias de Kali: Entrar a la consola de Kali y ejecutar `sudo apt update && sudo apt install -y kali-tools-top10`.
 
 ### Pasos para iniciar el sistema:
 1. Asegúrese de que la carpeta del frontend (`the-guardian-of-kali_frontend`) y la del backend (`the-guardian-of-kali_backend`) estén en el mismo directorio principal.
