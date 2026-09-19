@@ -12,7 +12,8 @@ let terminalBridge: WslTerminalBridge | null = null;
 let backendProcess: ChildProcess | null = null;
 
 function startBackend() {
-  const backendDir = 'C:\\Users\\usuario\\Desktop\\tarea_imposible\\the-guardian-of-kali_backend';
+  // __dirname is dist-electron, so we go up two levels to reach the root workspace folder
+  const backendDir = path.resolve(__dirname, '../../the-guardian-of-kali_backend');
   const pythonExe = path.join(backendDir, '.venv', 'Scripts', 'python.exe');
   
   backendProcess = spawn(pythonExe, ['-m', 'src.main'], {
