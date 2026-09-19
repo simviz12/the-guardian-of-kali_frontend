@@ -14,7 +14,25 @@ export const AppContent: React.FC = () => {
   const [showIntro, setShowIntro] = useState<boolean>(() => {
     return sessionStorage.getItem('kali_intro_shown') !== 'true';
   });
-  const [activeSession, setActiveSession] = useState<ActiveSessionConfig | null>(null);
+  const [activeSession, setActiveSession] = useState<ActiveSessionConfig | null>(() => {
+    const saved = localStorage.getItem('guardian-session-config');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        return null;
+      }
+    }
+    return null;
+  });
+
+  useEffect(() => {
+    if (activeSession) {
+      localStorage.setItem('guardian-session-config', JSON.stringify(activeSession));
+    } else {
+      localStorage.removeItem('guardian-session-config');
+    }
+  }, [activeSession]);
   const [activeTab, setActiveTab] = useState<'terminal' | 'history'>('terminal');
 
   // Backend connectivity tracking
@@ -126,6 +144,18 @@ export const AppContent: React.FC = () => {
           </div>
 
           <div className="flex items-center space-x-3">
+            {/* End Session Button */}
+            <button
+              onClick={() => {
+                localStorage.removeItem('guardian-session-id');
+                setActiveSession(null);
+              }}
+              title="Terminar sesión actual y empezar una nueva"
+              className="px-3 py-1.5 text-xs font-semibold rounded-lg border border-red-900/50 bg-red-950/30 text-red-400 hover:bg-red-900/50 hover:text-red-300 transition"
+            >
+              Terminar Sesión
+            </button>
+
             {/* Intro Video Replay Button */}
             <button
               onClick={handleReplayIntro}
