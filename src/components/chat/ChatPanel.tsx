@@ -7,6 +7,8 @@ import React, { useState, useRef, useEffect } from 'react';
 import { apiClient, ProposedCommand, parseAppError } from '../../services/apiClient';
 import { PolicyIndicator } from '../policy/PolicyIndicator';
 import { GlobalErrorBanner } from '../common/GlobalErrorBanner';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { ActiveSessionConfig } from '../../types/session';
 import { AppErrorDetails } from '../../types/errors';
 
@@ -354,7 +356,11 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ activeSession }) => {
                   : 'bg-zinc-900 border border-zinc-800 text-zinc-200'
               }`}
             >
-              <p className="whitespace-pre-wrap">{msg.text}</p>
+              <div className="prose prose-invert prose-sm max-w-none whitespace-pre-wrap">
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                  {msg.text}
+                </ReactMarkdown>
+              </div>
             </div>
 
             {/* Proposed Command Card */}
