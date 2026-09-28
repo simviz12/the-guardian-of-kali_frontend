@@ -13,6 +13,8 @@ export const TerminalView: React.FC = () => {
   const terminalInstanceRef = useRef<Terminal | null>(null);
   const fitAddonRef = useRef<FitAddon | null>(null);
   const [wslError, setWslError] = useState<AppErrorDetails | null>(null);
+  const [bannerDismissed, setBannerDismissed] = useState(false);
+  const [cmdInput, setCmdInput] = useState('');
 
   useEffect(() => {
     if (!window.terminalAPI) {
@@ -115,8 +117,6 @@ export const TerminalView: React.FC = () => {
     };
   }, []);
 
-  const [bannerDismissed, setBannerDismissed] = useState<boolean>(false);
-
   return (
     <div className="flex-1 h-full w-full bg-[#0c0e14] p-3 overflow-hidden flex flex-col relative">
       {wslError && !bannerDismissed && (
@@ -153,6 +153,36 @@ export const TerminalView: React.FC = () => {
         ref={terminalContainerRef}
         className="flex-1 w-full h-full overflow-hidden"
       />
+      
+      {/* Command Input Bar */}
+      <form 
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (cmdInput.trim() && window.terminalAPI) {
+            window.terminalAPI.sendInput(cmdInput + '\r');
+            setCmdInput('');
+          }
+        }}
+        className="mt-3 flex items-center gap-2 bg-zinc-950/80 border border-zinc-800 rounded-lg p-1.5 focus-within:border-emerald-500/50 focus-within:ring-1 focus-within:ring-emerald-500/50 transition-all"
+      >
+        <span className="text-emerald-500 font-mono pl-3 font-bold">┌──(carlos㉿kali)-[~]<br/>└─$</span>
+        <input
+          type="text"
+          value={cmdInput}
+          onChange={(e) => setCmdInput(e.target.value)}
+          placeholder="Pega o escribe un comando aquí y presiona Enter..."
+          className="flex-1 bg-transparent border-none text-zinc-100 font-mono text-sm focus:outline-none focus:ring-0 px-2"
+          autoComplete="off"
+          spellCheck={false}
+        />
+        <button
+          type="submit"
+          disabled={!cmdInput.trim()}
+          className="bg-emerald-600/20 text-emerald-400 hover:bg-emerald-500 hover:text-zinc-950 border border-emerald-500/30 font-bold px-4 py-1.5 rounded-md text-xs uppercase tracking-wider transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+        >
+          Ejecutar
+        </button>
+      </form>
     </div>
   );
 };

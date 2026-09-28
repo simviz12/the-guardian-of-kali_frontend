@@ -29,11 +29,17 @@ function createWindow(): void {
   const mainWindow = new BrowserWindow({
     width: 1280,
     height: 800,
+    show: false,
+    backgroundColor: '#09090b', // zinc-950 color to match the app theme
     webPreferences: {
       preload: path.join(__dirname, 'preload.cjs'),
       nodeIntegration: false,
       contextIsolation: true,
     },
+  });
+
+  mainWindow.once('ready-to-show', () => {
+    mainWindow.show();
   });
 
   // Initialize and attach the WSL terminal bridge for the operator user

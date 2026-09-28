@@ -66,7 +66,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ activeSession }) => {
         setMessages([{
           id: 'welcome',
           sender: 'ai',
-          text: '¡Hola Operador! Soy The Guardian of Kali. ¿En qué puedo ayudarte hoy con tu laboratorio o desafío de ciberseguridad / CTF?',
+          text: '¡Hola Operador! Soy The Guardian of Kaliche. ¿En qué puedo ayudarte hoy con tu laboratorio o desafío de ciberseguridad / CTF?',
           timestamp: new Date().toLocaleTimeString(),
         }]);
         return;
@@ -93,7 +93,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ activeSession }) => {
         setMessages([{
           id: 'welcome',
           sender: 'ai',
-          text: '¡Hola Operador! Soy The Guardian of Kali. ¿En qué puedo ayudarte hoy con tu laboratorio o desafío de ciberseguridad / CTF?',
+          text: '¡Hola Operador! Soy The Guardian of Kaliche. ¿En qué puedo ayudarte hoy con tu laboratorio o desafío de ciberseguridad / CTF?',
           timestamp: new Date().toLocaleTimeString(),
         }]);
       }

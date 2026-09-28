@@ -16,7 +16,6 @@ import {
 
 export interface SessionSetupProps {
   onSessionInitialized: (config: ActiveSessionConfig) => void;
-  onReplayIntro?: () => void;
 }
 
 // Regex to validate IPv4, IPv4 CIDR, or domain FQDN
@@ -27,7 +26,6 @@ const DOMAIN_REGEX =
 
 export const SessionSetup: React.FC<SessionSetupProps> = ({
   onSessionInitialized,
-  onReplayIntro,
 }) => {
   const [targetInput, setTargetInput] = useState('');
   const [targetDescInput, setTargetDescInput] = useState('');
@@ -115,49 +113,44 @@ export const SessionSetup: React.FC<SessionSetupProps> = ({
   };
 
   return (
-    <div className="flex min-h-screen w-full items-center justify-center bg-zinc-950 p-6 md:p-10 text-zinc-100">
-      <div className="w-full max-w-4xl rounded-2xl border border-zinc-800 bg-zinc-900/95 p-8 md:p-10 shadow-2xl backdrop-blur-xl">
+    <div className="flex min-h-screen w-full items-center justify-center bg-zinc-950 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(16,185,129,0.15),rgba(255,255,255,0))] p-6 md:p-10 text-zinc-100">
+      <div className="w-full max-w-4xl rounded-2xl border border-emerald-900/30 bg-zinc-900/80 p-8 md:p-10 shadow-[0_0_40px_rgba(16,185,129,0.1)] backdrop-blur-xl relative overflow-hidden">
+        {/* Decorative Grid Background */}
+        <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:40px_40px] [mask-image:radial-gradient(ellipse_60%_60%_at_50%_50%,#000_70%,transparent_100%)] opacity-20 pointer-events-none"></div>
+        
         {/* Header */}
-        <div className="mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-zinc-800 pb-6 gap-4">
-          <div className="flex items-center space-x-4">
-            <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 shadow-[0_0_20px_rgba(16,185,129,0.15)]">
-              <span className="font-mono text-2xl">🛡️</span>
+        <div className="mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-zinc-800 pb-6 gap-4 relative z-10">
+          <div className="flex items-center space-x-5">
+            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-500/10 border border-emerald-500/50 text-emerald-400 shadow-[0_0_20px_rgba(16,185,129,0.3)]">
+              <span className="font-mono text-3xl">🛡️</span>
             </div>
             <div>
-              <h1 className="text-xl md:text-2xl font-black tracking-wide text-zinc-100">
-                The Guardian of Kali — Configuración de Sesión
+              <h1 className="text-2xl md:text-3xl font-black tracking-wide text-zinc-100 drop-shadow-md">
+                THE GUARDIAN <span className="text-emerald-400">OF KALICHE</span>
               </h1>
-              <p className="text-sm text-zinc-400 mt-0.5">
-                Define el alcance de objetivos autorizados y el modo de operación antes de desbloquear la terminal y el copiloto IA.
+              <p className="text-xs md:text-sm text-zinc-400 mt-1 font-mono uppercase tracking-wider">
+                &gt; Inicializando Entorno de Seguridad Zero-Trust...
               </p>
             </div>
           </div>
           <div className="flex items-center space-x-3 self-end sm:self-center">
-            {onReplayIntro && (
-              <button
-                type="button"
-                onClick={onReplayIntro}
-                className="rounded-lg bg-zinc-800 hover:bg-zinc-700 px-3 py-1.5 text-xs font-semibold text-zinc-300 border border-zinc-700 transition flex items-center space-x-1.5"
-                title="Play system intro video"
-              >
-                <span>🎬 Intro</span>
-              </button>
-            )}
-            <span className="rounded-lg bg-zinc-800 px-3.5 py-1.5 text-xs md:text-sm font-mono text-emerald-400 border border-zinc-700 font-semibold shadow-inner">
-              WSL2 Security Gate
+            <span className="rounded-lg bg-black/50 px-4 py-2 text-xs md:text-sm font-mono text-emerald-400 border border-emerald-900/50 font-bold shadow-[0_0_10px_rgba(16,185,129,0.1)]">
+              WSL2 // GATEWAY
             </span>
           </div>
         </div>
 
-        {/* 1. Operator Information */}
-        <div className="mb-8">
-          <label className="block text-xs md:text-sm font-bold uppercase tracking-wider text-zinc-300 mb-2.5">
-            1. Nombre de Usuario del Operador Linux
-          </label>
-          <input
-            type="text"
-            value={operatorUser}
-            onChange={(e) => setOperatorUser(e.target.value)}
+        {/* Form Body - ensuring relative z-10 so inputs work over the background */}
+        <div className="relative z-10">
+          {/* 1. Operator Information */}
+          <div className="mb-8">
+            <label className="block text-xs md:text-sm font-bold uppercase tracking-wider text-emerald-400 mb-2.5">
+              1. Identidad de Operador
+            </label>
+            <input
+              type="text"
+              value={operatorUser}
+              onChange={(e) => setOperatorUser(e.target.value)}
             placeholder="Usuario operador (ej. carlos)"
             className="w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-base text-zinc-100 placeholder-zinc-500 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 focus:outline-none transition font-mono"
           />
@@ -168,14 +161,17 @@ export const SessionSetup: React.FC<SessionSetupProps> = ({
 
         {/* 2. Authorized Targets Scope (Zero-Trust Boundary) */}
         <div className="mb-8">
-          <div className="flex items-center justify-between mb-3">
-            <label className="text-xs md:text-sm font-bold uppercase tracking-wider text-zinc-300">
+          <div className="flex items-center justify-between mb-1">
+            <label className="text-xs md:text-sm font-bold uppercase tracking-wider text-emerald-400">
               2. Alcance de Objetivos Autorizados (Frontera Zero-Trust)
             </label>
             <span className="text-xs md:text-sm text-emerald-400 font-mono font-semibold">
               {targets.length} objetivo{targets.length === 1 ? '' : 's'} definido{targets.length === 1 ? '' : 's'}
             </span>
           </div>
+          <p className="text-xs text-zinc-400 mb-4 bg-zinc-950/50 p-3 rounded-lg border border-zinc-800/50 leading-relaxed">
+            <strong className="text-zinc-200">¿Qué es esto?</strong> Aquí defines qué máquinas o redes puede atacar/escanear la IA. Es una medida de seguridad (Zero-Trust) para evitar que el asistente ejecute comandos peligrosos contra IPs de tu red doméstica o servidores reales por error. <span className="text-emerald-400 font-medium">La IA será bloqueada automáticamente si intenta salir de este alcance.</span>
+          </p>
 
           {/* Quick Presets */}
           <div className="mb-3.5 flex flex-wrap gap-2.5">
@@ -352,6 +348,7 @@ export const SessionSetup: React.FC<SessionSetupProps> = ({
               Iniciar {localStorage.getItem('guardian-session-id') ? 'Nueva' : 'Sesión'} Segura →
             </button>
           </div>
+        </div>
         </div>
       </div>
     </div>
