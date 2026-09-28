@@ -212,9 +212,9 @@ export const AppContent: React.FC = () => {
             <TerminalView />
           </div>
           {activeTab === 'history' && (
-            <div className="h-full w-full p-3">
+            <div className="h-full w-full p-3 overflow-hidden">
               <SessionHistory
-                sessionId={activeSession.sessionId}
+                // No pasamos sessionId para que el backend nos devuelva el historial global completo
                 onSelectCommand={(cmdText) => {
                   setActiveTab('terminal');
                   if (window.terminalAPI) {
