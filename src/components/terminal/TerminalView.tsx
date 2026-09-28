@@ -114,9 +114,27 @@ export const TerminalView: React.FC = () => {
       term.dispose();
       terminalInstanceRef.current = null;
       fitAddonRef.current = null;
+      (window as any).getTerminalText = undefined;
     };
   }, []);
 
+  // Expose terminal text globally for the AI to read
+  useEffect(() => {
+    (window as any).getTerminalText = () => {
+      const term = terminalInstanceRef.current;
+      if (!term) return '';
+      const buffer = term.buffer.active;
+      let text = '';
+      const start = Math.max(0, buffer.cursorY + buffer.viewportY - 40); // Last 40 lines
+      for (let i = start; i <= buffer.cursorY + buffer.viewportY; i++) {
+        const line = buffer.getLine(i);
+        if (line) {
+          text += line.translateToString(true).trimEnd() + '\n';
+        }
+      }
+      return text.trim();
+    };
+  }, []);
   return (
     <div className="flex-1 h-full w-full bg-[#0c0e14] p-3 overflow-hidden flex flex-col relative">
       {wslError && !bannerDismissed && (

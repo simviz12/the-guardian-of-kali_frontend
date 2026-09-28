@@ -40,16 +40,34 @@ export const AppContent: React.FC = () => {
     if (res.success) {
       setBackendStatus('online');
       setBackendError(null);
+      return true;
     } else {
       setBackendStatus('offline');
       setBackendError(parseAppError(res.error));
+      return false;
     }
   }, []);
 
   useEffect(() => {
-    checkBackendHealth();
-    const interval = setInterval(checkBackendHealth, 15000);
-    return () => clearInterval(interval);
+    let interval: NodeJS.Timeout;
+    
+    // Función recursiva para intentar conectar rápido al principio
+    const connectToBackend = async () => {
+      const isOnline = await checkBackendHealth();
+      if (!isOnline) {
+        // Si falló, intentar de nuevo rápido (cada 2 segundos)
+        setTimeout(connectToBackend, 2000);
+      } else {
+        // Una vez online, pasar a chequeo lento (cada 15s)
+        interval = setInterval(checkBackendHealth, 15000);
+      }
+    };
+    
+    connectToBackend();
+    
+    return () => {
+      if (interval) clearInterval(interval);
+    };
   }, [checkBackendHealth]);
 
   if (!activeSession) {
@@ -77,22 +95,25 @@ export const AppContent: React.FC = () => {
     <div className="flex h-screen w-screen overflow-hidden bg-zinc-950 text-zinc-100">
       {/* Main Workspace Area */}
       <div className="flex flex-1 flex-col overflow-hidden">
-        {/* Sleek Cyber Navigation Bar */}
-        <header className="flex flex-wrap md:flex-nowrap items-center justify-between border-b border-emerald-900/30 bg-zinc-950/90 backdrop-blur-xl px-4 py-3 shadow-[0_4px_30px_rgba(0,0,0,0.5)] z-20">
-          <div className="flex items-center space-x-4 mb-2 md:mb-0">
-            <div className="flex items-center gap-2 border-r border-zinc-800 pr-4">
-              <span className="text-xl">🛡️</span>
-              <h1 className="text-sm md:text-base font-black tracking-widest text-zinc-100 uppercase drop-shadow-md">
+        {/* Sleek Minimalist Navigation Bar */}
+        <header className="flex h-14 shrink-0 items-center justify-between border-b border-emerald-900/30 bg-zinc-950/95 px-4 z-20">
+          
+          {/* Left: Branding */}
+          <div className="flex items-center space-x-3 h-full">
+            <div className="flex items-center space-x-2 border-r border-zinc-800 pr-3">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+              <h1 className="text-sm font-black tracking-widest text-zinc-100 uppercase truncate">
                 THE GUARDIAN <span className="text-emerald-400">OF KALICHE</span>
               </h1>
             </div>
             
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="rounded bg-black/50 px-2 py-0.5 text-[10px] font-mono text-zinc-400 border border-zinc-800">
+            {/* Badges */}
+            <div className="hidden sm:flex items-center space-x-2">
+              <span className="rounded bg-zinc-900 px-2 py-0.5 text-[9px] font-mono text-zinc-400 border border-zinc-800">
                 WSL2 NATIVE
               </span>
               <span
-                className={`rounded px-2 py-0.5 text-[10px] font-mono uppercase font-bold border ${
+                className={`rounded px-2 py-0.5 text-[9px] font-mono uppercase font-bold border ${
                   activeSession.operationMode === 'autonomous'
                     ? 'bg-amber-500/10 text-amber-400 border-amber-500/20'
                     : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
@@ -100,18 +121,19 @@ export const AppContent: React.FC = () => {
               >
                 MODO: {activeSession.operationMode === 'autonomous' ? 'AUTÓNOMO' : 'SUGERENCIA'}
               </span>
-              <span className="rounded bg-black/50 px-2 py-0.5 text-[10px] font-mono text-zinc-400 border border-zinc-800 hidden lg:inline">
+              <span className="rounded bg-zinc-900 px-2 py-0.5 text-[9px] font-mono text-zinc-400 border border-zinc-800 hidden lg:inline">
                 ALCANCE: <strong className="text-zinc-200">{activeSession.authorizedTargets.length} OBJ</strong>
               </span>
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3">
-            {/* Backend Connectivity Status Badge */}
-            <span
+          {/* Right: Controls & Status */}
+          <div className="flex items-center space-x-4 h-full">
+            {/* Backend Connectivity */}
+            <div
               title={
                 backendStatus === 'online'
-                  ? 'El backend está conectado (127.0.0.1:8765)'
+                  ? 'El backend está conectado'
                   : 'El backend está desconectado'
               }
               className={`flex items-center space-x-1.5 px-2 py-1 text-[10px] uppercase font-mono font-bold tracking-wider ${
@@ -122,41 +144,41 @@ export const AppContent: React.FC = () => {
                   : 'text-zinc-500'
               }`}
             >
-              <span
-                className={`h-1.5 w-1.5 rounded-full shadow-lg ${
+              <div
+                className={`h-1.5 w-1.5 rounded-full ${
                   backendStatus === 'online'
-                    ? 'bg-emerald-400 shadow-emerald-500'
+                    ? 'bg-emerald-400 shadow-[0_0_5px_#34d399]'
                     : backendStatus === 'offline'
-                    ? 'bg-red-400 shadow-red-500'
+                    ? 'bg-red-400 shadow-[0_0_5px_#f87171]'
                     : 'bg-zinc-500'
                 }`}
               />
-              <span>{backendStatus === 'online' ? 'API OK' : 'API FAIL'}</span>
-            </span>
+              <span className="hidden sm:inline">{backendStatus === 'online' ? 'API OK' : 'API FAIL'}</span>
+            </div>
 
-            <div className="w-px h-5 bg-zinc-800 hidden md:block"></div>
+            <div className="w-px h-4 bg-zinc-800 hidden sm:block"></div>
 
-            {/* View Mode Selector - Sleeker Tabs */}
-            <nav className="flex items-center rounded-md bg-zinc-900/50 p-1 border border-zinc-800/50">
+            {/* View Mode Selector */}
+            <nav className="flex items-center rounded-md bg-zinc-900 border border-zinc-800 p-0.5">
               <button
                 onClick={() => setActiveTab('terminal')}
-                className={`px-3 py-1.5 text-xs font-bold rounded transition-all duration-200 uppercase tracking-wider ${
+                className={`px-3 py-1 text-[10px] font-bold rounded-sm transition-all uppercase tracking-wider ${
                   activeTab === 'terminal'
-                    ? 'bg-emerald-500/20 text-emerald-400 shadow-sm border border-emerald-500/30'
-                    : 'text-zinc-500 hover:text-zinc-300 transparent border border-transparent'
+                    ? 'bg-emerald-500/20 text-emerald-400'
+                    : 'text-zinc-500 hover:text-zinc-300 transparent'
                 }`}
               >
-                &gt;_ Terminal
+                Terminal
               </button>
               <button
                 onClick={() => setActiveTab('history')}
-                className={`px-3 py-1.5 text-xs font-bold rounded transition-all duration-200 uppercase tracking-wider ${
+                className={`px-3 py-1 text-[10px] font-bold rounded-sm transition-all uppercase tracking-wider ${
                   activeTab === 'history'
-                    ? 'bg-emerald-500/20 text-emerald-400 shadow-sm border border-emerald-500/30'
-                    : 'text-zinc-500 hover:text-zinc-300 transparent border border-transparent'
+                    ? 'bg-emerald-500/20 text-emerald-400'
+                    : 'text-zinc-500 hover:text-zinc-300 transparent'
                 }`}
               >
-                📜 Historial
+                Historial
               </button>
             </nav>
 
@@ -165,11 +187,10 @@ export const AppContent: React.FC = () => {
                 localStorage.removeItem('guardian-session-id');
                 setActiveSession(null);
               }}
-              title="Cerrar y destruir sesión"
-              className="ml-2 p-1.5 text-zinc-500 hover:bg-red-500/10 hover:text-red-400 hover:border-red-500/30 rounded border border-transparent transition-all"
+              title="Terminar Sesión"
+              className="p-1.5 text-zinc-500 hover:bg-red-500/10 hover:text-red-400 hover:border-red-500/30 rounded border border-transparent transition-all ml-1"
             >
-              <span className="sr-only">Terminar Sesión</span>
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
             </button>
           </div>
         </header>

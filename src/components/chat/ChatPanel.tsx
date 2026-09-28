@@ -41,6 +41,8 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ activeSession }) => {
   );
   const [activeError, setActiveError] = useState<AppErrorDetails | null>(null);
   const [lastUserPrompt, setLastUserPrompt] = useState<string>('');
+  const [chatMode, setChatMode] = useState<'ejecuta' | 'pregunta'>('ejecuta');
+  const [readTerminal, setReadTerminal] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Persist sessionId to localStorage whenever it changes
@@ -113,29 +115,49 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ activeSession }) => {
   const handleSendMessage = async (e?: React.FormEvent, retryPrompt?: string) => {
     if (e) e.preventDefault();
     const promptToSend = (retryPrompt || inputValue).trim();
-    if (!promptToSend || isLoading) return;
+    if (!promptToSend && !readTerminal) return;
+    if (isLoading) return;
+
+    // Build the contextual prompt
+    let contextualPrompt = promptToSend;
+
+    // 1. Read Terminal Feature
+    if (readTerminal && (window as any).getTerminalText) {
+      const termContent = (window as any).getTerminalText();
+      if (termContent) {
+        contextualPrompt += `\n\n--- CONTEXTO ACTUAL DE LA TERMINAL ---\n${termContent}\n--------------------------------------\n(Por favor lee mi terminal de arriba para tener contexto antes de responder).`;
+      } else {
+        contextualPrompt += `\n\n(Intenté leer la terminal pero parece estar vacía).`;
+      }
+      setReadTerminal(false); // Reset after sending
+    }
+
+    // 2. Chat Mode Feature
+    if (chatMode === 'pregunta') {
+      contextualPrompt += `\n\n[INSTRUCCIÓN DEL SISTEMA: El usuario ha activado el MODO PREGUNTA. Solo responde a la pregunta de forma analítica o teórica. NO generes la estructura JSON proposed_command, NO propongas comandos para ejecutar. Limítate al texto de respuesta.]`;
+    }
 
     if (!retryPrompt) {
       const userMessageId = `msg-${Date.now()}`;
       const userMessage: ChatMessage = {
         id: userMessageId,
         sender: 'user',
-        text: promptToSend,
+        text: promptToSend, // Only show what the user typed in the UI
         timestamp: new Date().toLocaleTimeString(),
       };
       setMessages((prev) => [...prev, userMessage]);
       setInputValue('');
     }
 
-    setLastUserPrompt(promptToSend);
+    setLastUserPrompt(contextualPrompt); // Retry should use the built contextual prompt
     setActiveError(null);
     setIsLoading(true);
 
     const currentSessionId = sessionId;
     const targetsList = activeSession?.authorizedTargets?.map((t) => t.value) || [];
 
-    // Save user message to DB
-    if (!retryPrompt && currentSessionId) {
+    // Save user message to DB (save the raw promptToSend to keep history clean)
+    if (!retryPrompt && currentSessionId && promptToSend) {
       apiClient.saveChatMessage({
         session_id: currentSessionId,
         sender: 'user',
@@ -144,8 +166,9 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ activeSession }) => {
       });
     }
 
+    // Send the enriched prompt to the AI
     const result = await apiClient.sendMessage(
-      promptToSend,
+      contextualPrompt,
       sessionId,
       targetsList,
       activeSession?.operationMode || 'suggestion'
@@ -488,20 +511,49 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ activeSession }) => {
       </div>
 
       {/* Input Form */}
-      <form onSubmit={handleSendMessage} className="border-t border-zinc-800 p-4 bg-zinc-900/50">
+      <form onSubmit={handleSendMessage} className="border-t border-zinc-800 p-3 bg-zinc-950 flex flex-col gap-2.5">
+        {/* Chat Control Toolbar */}
+        <div className="flex items-center justify-between px-1">
+          <div className="flex items-center space-x-3">
+            <div className="flex items-center space-x-2 bg-zinc-900 border border-zinc-800 rounded-md px-2 py-1">
+              <span className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider">Modo:</span>
+              <select
+                value={chatMode}
+                onChange={(e) => setChatMode(e.target.value as 'ejecuta' | 'pregunta')}
+                className="bg-transparent text-zinc-300 text-xs font-semibold focus:outline-none focus:text-emerald-400 cursor-pointer"
+              >
+                <option value="ejecuta">Ejecución (Acciones)</option>
+                <option value="pregunta">Análisis (Solo texto)</option>
+              </select>
+            </div>
+            
+            <label className="flex items-center space-x-2 cursor-pointer group bg-zinc-900 border border-zinc-800 rounded-md px-2 py-1 hover:border-zinc-700 transition-colors">
+              <input
+                type="checkbox"
+                checked={readTerminal}
+                onChange={(e) => setReadTerminal(e.target.checked)}
+                className="w-3 h-3 rounded-sm border-zinc-600 bg-zinc-800 text-emerald-500 focus:ring-emerald-500 focus:ring-1 focus:ring-offset-0 cursor-pointer"
+              />
+              <span className="text-[10px] uppercase font-bold text-zinc-400 group-hover:text-emerald-400 transition-colors">
+                Incluir Contexto Terminal
+              </span>
+            </label>
+          </div>
+        </div>
+
         <div className="flex space-x-2.5">
           <input
             type="text"
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
-            placeholder="Pregunta a Guardian (ej. ¿Cómo escanear puertos?)..."
+            placeholder={chatMode === 'ejecuta' ? "Instruye a Guardian (ej. Escanea puertos)..." : "Pregunta a Guardian (ej. ¿Por qué falla esto?)..."}
             disabled={isLoading}
-            className="flex-1 rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-sm md:text-base text-zinc-100 placeholder-zinc-500 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-50 transition font-sans"
+            className="flex-1 rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-sm text-zinc-100 placeholder-zinc-600 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500/50 disabled:opacity-50 transition-all font-sans shadow-inner"
           />
           <button
             type="submit"
-            disabled={isLoading || !inputValue.trim()}
-            className="rounded-xl bg-blue-600 px-5 py-3 text-sm md:text-base font-bold text-white hover:bg-blue-500 disabled:opacity-40 disabled:cursor-not-allowed transition shadow-md active:scale-95 cursor-pointer"
+            disabled={isLoading || (!inputValue.trim() && !readTerminal)}
+            className="rounded-lg bg-emerald-600/90 px-6 py-2.5 text-sm font-bold text-white hover:bg-emerald-500 disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-[0_0_15px_rgba(16,185,129,0.2)] hover:shadow-[0_0_20px_rgba(16,185,129,0.4)] active:scale-95"
           >
             Enviar
           </button>
