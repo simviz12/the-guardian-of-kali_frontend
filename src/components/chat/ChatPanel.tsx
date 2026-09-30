@@ -35,7 +35,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ activeSession }) => {
       {
         id: '1',
         sender: 'ai',
-        text: 'Hello Operator! I am The Guardian of Kaliche AI Copilot. How can I assist you with your security laboratory today?',
+        text: '¡Hola Operador! Soy el Copiloto IA de The Guardian of Kaliche. ¿Cómo puedo ayudarte hoy con tu laboratorio de seguridad?',
         timestamp: new Date().toISOString()
       }
     ]);
@@ -116,8 +116,8 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ activeSession }) => {
             <span className="material-symbols-outlined text-[20px]">auto_awesome</span>
           </div>
           <div className="flex flex-col">
-            <span className="font-headline-sm text-headline-sm text-on-surface font-semibold uppercase tracking-wide">AI Security Copilot</span>
-            <span className="font-label-sm text-label-sm text-tertiary">Gemini 2.5 • SecOps Reasoning</span>
+            <span className="font-headline-sm text-headline-sm text-on-surface font-semibold uppercase tracking-wide">Copiloto de Seguridad IA</span>
+            <span className="font-label-sm text-label-sm text-tertiary">Gemini 2.5 • Razonamiento SecOps</span>
           </div>
         </div>
         <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary/10 text-primary font-label-sm text-label-sm font-medium">
@@ -146,7 +146,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ activeSession }) => {
                     <div className="flex items-center justify-between">
                       <span className="flex items-center gap-1.5 font-label-sm text-label-sm font-medium text-tertiary">
                         <span className="material-symbols-outlined text-[16px]">terminal</span>
-                        SUGGESTED COMMAND
+                        COMANDO SUGERIDO
                       </span>
                       <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-primary/10 text-primary font-label-sm text-label-sm">
                         Risk: Analizado
@@ -161,7 +161,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ activeSession }) => {
                         className="flex-1 bg-primary/15 hover:bg-primary text-primary hover:text-on-primary font-headline-sm text-headline-sm py-2 px-space-md rounded-lg flex items-center justify-center gap-2 transition"
                       >
                         <span className="material-symbols-outlined text-[18px]">play_circle</span>
-                        USE COMMAND
+                        USAR COMANDO
                       </button>
                       <button 
                         onClick={() => rejectAction(msg.id)}
@@ -174,19 +174,19 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ activeSession }) => {
                 )}
                 {msg.executionStatus === 'executed' && (
                   <div className="text-primary font-label-sm text-label-sm flex items-center gap-1 mt-1">
-                    <span className="material-symbols-outlined text-[14px]">check_circle</span> Command executed
+                    <span className="material-symbols-outlined text-[14px]">check_circle</span> Comando ejecutado
                   </div>
                 )}
                 {msg.executionStatus === 'rejected' && (
                   <div className="text-on-surface-variant font-label-sm text-label-sm flex items-center gap-1 mt-1">
-                    <span className="material-symbols-outlined text-[14px]">cancel</span> Command dismissed
+                    <span className="material-symbols-outlined text-[14px]">cancel</span> Comando descartado
                   </div>
                 )}
               </>
             ) : (
               <>
                 <div className="flex items-center gap-1 text-label-sm font-label-sm text-on-surface-variant">
-                  <span>Security Analyst</span>
+                  <span>Analista de Seguridad</span>
                 </div>
                 <div className="bg-surface-container-high text-on-surface font-body-md text-body-md px-space-lg py-2.5 rounded-xl rounded-tr-sm max-w-[90%]">
                   {msg.text}
@@ -198,7 +198,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ activeSession }) => {
         {isLoading && (
           <div className="flex items-center gap-2 text-tertiary">
             <span className="material-symbols-outlined animate-spin">refresh</span>
-            <span className="font-label-sm text-label-sm uppercase tracking-wider">Analyzing...</span>
+            <span className="font-label-sm text-label-sm uppercase tracking-wider">Analizando...</span>
           </div>
         )}
         <div ref={messagesEndRef} />
@@ -218,8 +218,8 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ activeSession }) => {
               <div className="w-9 h-5 bg-surface-container-highest peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
             </div>
             <div className="flex flex-col">
-              <span className="font-headline-sm text-headline-sm text-on-surface">Read terminal output</span>
-              <span className="font-label-sm text-label-sm text-on-surface-variant">AI analyzes latest terminal lines</span>
+              <span className="font-headline-sm text-headline-sm text-on-surface">Leer salida de la terminal</span>
+              <span className="font-label-sm text-label-sm text-on-surface-variant">La IA analiza las últimas líneas de la terminal</span>
             </div>
           </label>
         </div>
@@ -231,7 +231,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ activeSession }) => {
             onChange={(e) => setInputValue(e.target.value)}
             disabled={isLoading}
             className="w-full bg-surface-container-lowest font-body-md text-body-md text-on-surface placeholder:text-outline rounded-lg pl-4 pr-12 py-3 focus:outline-none focus:bg-surface-container-high transition-colors" 
-            placeholder="Ask Guardian AI or request a command..." 
+            placeholder="Pregúntale a Guardian AI o solicita un comando..." 
           />
           <button 
             type="submit" 

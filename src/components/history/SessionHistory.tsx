@@ -26,11 +26,11 @@ export const SessionHistory: React.FC = () => {
           </div>
           <div className="flex flex-col">
             <div className="flex items-center gap-space-sm">
-              <h1 className="font-headline-md text-headline-md text-on-surface tracking-tight uppercase">GLOBAL AUDIT HISTORY</h1>
+              <h1 className="font-headline-md text-headline-md text-on-surface tracking-tight uppercase">HISTORIAL DE AUDITORÍA GLOBAL</h1>
               <span className="font-label-sm text-label-sm px-1.5 py-0.5 bg-surface-container-high text-primary uppercase rounded">v1.4 SEC-LOG</span>
             </div>
             <p className="font-body-sm text-body-sm text-on-surface-variant flex items-center gap-1">
-              <span>Immutable operation log</span>
+              <span>Registro de operaciones inmutable</span>
               <span className="text-outline-variant">•</span>
               <span className="font-label-sm text-label-sm text-primary">SIG: VALID</span>
             </p>
@@ -41,13 +41,13 @@ export const SessionHistory: React.FC = () => {
             <span className="material-symbols-outlined absolute left-2 text-[14px] text-on-surface-variant pointer-events-none">search</span>
             <input 
               type="text" 
-              placeholder="Search logs..." 
+              placeholder="Buscar registros..." 
               className="bg-surface-container-lowest text-on-surface pl-6 pr-2.5 py-1 font-label-sm text-label-sm outline-none placeholder:text-outline focus:bg-surface-container-high w-36 lg:w-48 transition-all rounded" 
             />
           </div>
           <button className="px-2.5 py-1 bg-surface-container hover:bg-surface-container-high text-on-surface font-label-sm text-label-sm flex items-center gap-1 transition-colors rounded">
             <span className="material-symbols-outlined text-[13px] text-primary">download</span>
-            <span>Export CSV</span>
+            <span>Exportar CSV</span>
           </button>
         </div>
       </div>
@@ -55,7 +55,7 @@ export const SessionHistory: React.FC = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-space-md">
         <div className="bg-surface-container-low p-space-md flex flex-col justify-between relative overflow-hidden rounded-lg border border-outline-variant">
           <div className="flex items-center justify-between font-label-sm text-label-sm text-on-surface-variant">
-            <span className="uppercase tracking-wider">TOTAL OPERATIONS</span>
+            <span className="uppercase tracking-wider">OPERACIONES TOTALES</span>
             <span className="material-symbols-outlined text-[15px] text-outline">database</span>
           </div>
           <div className="flex items-baseline justify-between mt-space-md">
@@ -66,7 +66,7 @@ export const SessionHistory: React.FC = () => {
 
         <div className="bg-surface-container-low p-space-md flex flex-col justify-between relative overflow-hidden rounded-lg border border-outline-variant">
           <div className="flex items-center justify-between font-label-sm text-label-sm text-on-surface-variant">
-            <span className="uppercase tracking-wider">AI ACTIONS</span>
+            <span className="uppercase tracking-wider">ACCIONES DE LA IA</span>
             <span className="material-symbols-outlined text-[15px] text-tertiary">smart_toy</span>
           </div>
           <div className="flex items-baseline justify-between mt-space-md">
@@ -77,24 +77,24 @@ export const SessionHistory: React.FC = () => {
 
         <div className="bg-surface-container-low p-space-md flex flex-col justify-between relative overflow-hidden rounded-lg border border-outline-variant">
           <div className="flex items-center justify-between font-label-sm text-label-sm text-on-surface-variant">
-            <span className="uppercase tracking-wider text-error">BLOCKED INTERCEPTS</span>
+            <span className="uppercase tracking-wider text-error">INTERCEPCIONES BLOQUEADAS</span>
             <span className="material-symbols-outlined text-[15px] text-error">gpp_bad</span>
           </div>
           <div className="flex items-baseline justify-between mt-space-md">
             <span className="font-headline-lg text-headline-lg font-bold text-error tracking-tight">{blockedCommands}</span>
-            <span className="font-label-sm text-label-sm text-error uppercase">STRICT INTERCEPT</span>
+            <span className="font-label-sm text-label-sm text-error uppercase">INTERCEPCIÓN ESTRICTA</span>
           </div>
           <div className="w-full bg-surface-container-lowest h-1 mt-space-sm rounded-full"><div className="bg-error h-1 w-1/4 rounded-full"></div></div>
         </div>
 
         <div className="bg-surface-container-low p-space-md flex flex-col justify-between relative overflow-hidden rounded-lg border border-outline-variant">
           <div className="flex items-center justify-between font-label-sm text-label-sm text-on-surface-variant">
-            <span className="uppercase tracking-wider">SESSION STATUS</span>
+            <span className="uppercase tracking-wider">ESTADO DE LA SESIÓN</span>
             <span className="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
           </div>
           <div className="flex items-baseline justify-between mt-space-md">
-            <span className="font-headline-lg text-headline-lg font-bold text-primary tracking-tight">ACTIVE</span>
-            <span className="font-label-sm text-label-sm text-on-surface-variant font-mono">ENFORCED</span>
+            <span className="font-headline-lg text-headline-lg font-bold text-primary tracking-tight">ACTIVA</span>
+            <span className="font-label-sm text-label-sm text-on-surface-variant font-mono">PROTEGIDA</span>
           </div>
           <div className="w-full bg-surface-container-lowest h-1 mt-space-sm rounded-full"><div className="bg-primary h-1 w-[82%] rounded-full"></div></div>
         </div>
@@ -104,19 +104,19 @@ export const SessionHistory: React.FC = () => {
         <div className="px-space-md py-space-sm bg-surface-container flex items-center justify-between border-b border-outline-variant">
           <div className="flex items-center gap-space-sm">
             <span className="material-symbols-outlined text-[15px] text-primary">data_table</span>
-            <span className="font-label-sm text-label-sm text-on-surface uppercase tracking-wider font-semibold">VERIFIED TELEMETRY LOG [ZERO-TRUST AUDIT STREAM]</span>
+            <span className="font-label-sm text-label-sm text-on-surface uppercase tracking-wider font-semibold">REGISTRO DE TELEMETRÍA VERIFICADO [FLUJO DE AUDITORÍA ZERO-TRUST]</span>
           </div>
         </div>
         <div className="overflow-y-auto w-full flex-1">
           <table className="w-full text-left font-label-sm text-label-sm border-collapse">
             <thead className="sticky top-0 z-10">
               <tr className="bg-surface-container-high text-on-surface-variant uppercase text-[11px] select-none">
-                <th className="py-2 px-3 font-medium">TIME</th>
-                <th className="py-2 px-3 font-medium">OPERATOR</th>
-                <th className="py-2 px-3 font-medium">SOURCE</th>
-                <th className="py-2 px-3 font-medium min-w-[320px]">COMMAND</th>
-                <th className="py-2 px-3 font-medium text-center">RISK</th>
-                <th className="py-2 px-3 font-medium text-right">STATUS</th>
+                <th className="py-2 px-3 font-medium">HORA</th>
+                <th className="py-2 px-3 font-medium">OPERADOR</th>
+                <th className="py-2 px-3 font-medium">ORIGEN</th>
+                <th className="py-2 px-3 font-medium min-w-[320px]">COMANDO</th>
+                <th className="py-2 px-3 font-medium text-center">RIESGO</th>
+                <th className="py-2 px-3 font-medium text-right">ESTADO</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-surface-container-highest font-mono">
@@ -147,7 +147,7 @@ export const SessionHistory: React.FC = () => {
               ))}
               {commands.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="py-8 text-center text-outline-variant italic">No operations recorded in ledger.</td>
+                  <td colSpan={6} className="py-8 text-center text-outline-variant italic">No hay operaciones registradas en el libro mayor.</td>
                 </tr>
               )}
             </tbody>

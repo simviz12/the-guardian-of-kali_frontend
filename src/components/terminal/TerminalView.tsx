@@ -108,11 +108,11 @@ export const TerminalView: React.FC = () => {
           </div>
           <div className="flex items-center gap-space-md">
             <span className="font-headline-sm text-headline-sm text-on-surface tracking-wide uppercase font-semibold">
-              Kali Linux Terminal
+              Terminal de Kali Linux
             </span>
             <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-primary/10 text-primary font-label-sm text-label-sm font-medium">
               <span className="w-1.5 h-1.5 rounded-full bg-primary"></span>
-              WSL2 CONNECTED
+              CONECTADO A WSL2
             </span>
           </div>
         </div>
@@ -125,9 +125,9 @@ export const TerminalView: React.FC = () => {
             <div className="flex items-start space-x-3.5">
               <span className="material-symbols-outlined text-[24px] text-tertiary">warning</span>
               <div>
-                <h3 className="font-headline-sm text-headline-sm text-on-surface uppercase tracking-wider">Web Browser Preview</h3>
+                <h3 className="font-headline-sm text-headline-sm text-on-surface uppercase tracking-wider">Vista Previa de Navegador Web</h3>
                 <p className="mt-1 font-body-sm text-body-sm text-on-surface-variant">
-                  Run <code className="bg-surface-container text-primary px-1 py-0.5 rounded">npm start</code> to connect natively to WSL2.
+                  Ejecuta <code className="bg-surface-container text-primary px-1 py-0.5 rounded">npm start</code> para conectar nativamente a WSL2.
                 </p>
               </div>
             </div>
@@ -161,7 +161,7 @@ export const TerminalView: React.FC = () => {
               type="text"
               value={cmdInput}
               onChange={(e) => setCmdInput(e.target.value)}
-              placeholder="Type your command here (e.g. nmap -sV 10.10.10.10)..."
+              placeholder="Escribe tu comando aquí (ej. nmap -sV 10.10.10.10)..."
               className="w-full bg-surface-container font-terminal-stream text-on-surface placeholder:text-outline text-base rounded-lg pl-10 pr-4 py-3 focus:outline-none focus:bg-surface-container-high transition-colors"
               autoComplete="off"
               spellCheck={false}
@@ -173,13 +173,13 @@ export const TerminalView: React.FC = () => {
             className="bg-primary text-on-primary hover:bg-surface-tint font-headline-sm text-headline-sm font-semibold px-space-xl py-3 rounded-lg flex items-center gap-2 transition disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <span className="material-symbols-outlined text-[18px]">terminal</span>
-            RUN COMMAND
+            EJECUTAR COMANDO
           </button>
         </form>
         <div className="flex items-center justify-between px-space-xs font-label-sm text-label-sm text-on-surface-variant">
           <span className="flex items-center gap-1.5">
             <span className="material-symbols-outlined text-[14px] text-outline">keyboard_return</span>
-            Press ↵ Enter to execute directly into WSL2 session
+            Presiona ↵ Enter para ejecutar directamente en la sesión WSL2
           </span>
         </div>
       </div>

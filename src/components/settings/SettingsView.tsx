@@ -43,9 +43,9 @@ export const SettingsView: React.FC = () => {
             <span className="material-symbols-outlined text-[20px]">settings</span>
           </div>
           <div className="flex flex-col">
-            <h1 className="font-headline-md text-headline-md text-on-surface tracking-tight uppercase">SYSTEM SETTINGS</h1>
+            <h1 className="font-headline-md text-headline-md text-on-surface tracking-tight uppercase">AJUSTES DEL SISTEMA</h1>
             <p className="font-body-sm text-body-sm text-on-surface-variant flex items-center gap-1">
-              Configure system parameters and external integrations.
+              Configura los parámetros del sistema e integraciones externas.
             </p>
           </div>
         </div>
@@ -53,14 +53,14 @@ export const SettingsView: React.FC = () => {
 
       <div className="bg-surface-container-low p-space-lg rounded-lg border border-outline-variant flex-1">
         <h2 className="font-headline-sm text-headline-sm uppercase border-b border-outline-variant pb-2 mb-4 text-tertiary">
-          AI Copilot Configuration
+          Configuración del Copiloto IA
         </h2>
         
         <form onSubmit={handleSave} className="max-w-xl flex flex-col gap-4">
           <div className="flex flex-col gap-1">
-            <label className="font-label-sm text-label-sm uppercase tracking-wider text-outline font-medium">Google Gemini API Key</label>
+            <label className="font-label-sm text-label-sm uppercase tracking-wider text-outline font-medium">Clave de API de Google Gemini</label>
             <p className="text-body-sm text-on-surface-variant mb-2">
-              The Guardian of Kaliche utilizes Google Gemini 2.5 Flash for rapid intelligence gathering and command generation. 
+              The Guardian of Kaliche utiliza Google Gemini 2.5 Flash para recopilación rápida de inteligencia y generación de comandos. 
               {hasKey ? (
                 <span className="text-primary font-bold ml-2">"S API Key ya configurada.</span>
               ) : (
