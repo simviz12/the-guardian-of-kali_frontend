@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ActiveSessionConfig, AuthorizedTargetConfig, OperationMode } from '../../types/session';
+import { ActiveSessionConfig, OperationMode } from '../../types/session';
 
 export interface SessionSetupProps {
   onSessionInitialized: (config: ActiveSessionConfig) => void;
