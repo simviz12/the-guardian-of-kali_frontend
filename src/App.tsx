@@ -18,7 +18,7 @@ const AppContent: React.FC = () => {
         sessionId: saved,
         operationMode: 'suggestion',
         authorizedTargets: [],
-        isActive: true,
+        user: 'carlos', startedAt: new Date().toISOString(),
       };
     }
     return null;

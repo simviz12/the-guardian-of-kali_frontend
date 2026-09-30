@@ -19,7 +19,7 @@ export const SessionSetup: React.FC<SessionSetupProps> = ({ onSessionInitialized
         sessionId: crypto.randomUUID(),
         operationMode,
         authorizedTargets: [{ value: targetScope, description: 'User defined scope' }],
-        isActive: true,
+        user: operatorId, startedAt: new Date().toISOString(),
       });
     }, 1200);
   };

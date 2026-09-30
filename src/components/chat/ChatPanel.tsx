@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { apiClient, ProposedCommand, parseAppError } from '../../services/apiClient';
+import { apiClient, ProposedCommand } from '../../services/apiClient';
 import { ActiveSessionConfig } from '../../types/session';
-import { AppErrorDetails } from '../../types/errors';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
@@ -67,19 +66,14 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ activeSession }) => {
     setIsLoading(true);
 
     try {
-      const response = await apiClient.sendMessage(finalPrompt, {
-        sessionId: sessionId || 'default',
-        operatorId: 'carlos',
-        authorizedTargets: ['10.10.10.10'],
-        mode: activeSession?.operationMode || 'suggestion'
-      });
+      const response = await apiClient.sendMessage(finalPrompt, sessionId || undefined);
 
       if (response.success && response.data) {
         setMessages((prev) => [...prev, {
           id: (Date.now() + 1).toString(),
           sender: 'ai',
           text: response.data.response,
-          proposedCommand: response.data.proposedCommand,
+          proposedCommand: response.data.proposed_command,
           executionStatus: 'idle',
           timestamp: new Date().toISOString()
         }]);
@@ -106,7 +100,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ activeSession }) => {
   const executeAction = async (msgId: string, cmd: ProposedCommand) => {
     if (!window.terminalAPI) return;
     setMessages((prev) => prev.map(m => m.id === msgId ? { ...m, executionStatus: 'executed' } : m));
-    window.terminalAPI.sendInput(cmd.command + '\n');
+    window.terminalAPI.sendInput(cmd.text + '\n');
   };
 
   const rejectAction = (msgId: string) => {
@@ -155,11 +149,11 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ activeSession }) => {
                         SUGGESTED COMMAND
                       </span>
                       <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-primary/10 text-primary font-label-sm text-label-sm">
-                        Risk: {msg.proposedCommand.riskLevel}
+                        Risk: Analizado
                       </span>
                     </div>
                     <div className="bg-surface-container p-space-md rounded-lg font-terminal-stream text-sm text-primary select-all break-all leading-normal">
-                      {msg.proposedCommand.command}
+                      {msg.proposedCommand.text}
                     </div>
                     <div className="flex items-center gap-space-md pt-1">
                       <button 
