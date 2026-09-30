@@ -71,7 +71,7 @@ export const SessionSetup: React.FC<SessionSetupProps> = ({ onSessionInitialized
               <span className="material-symbols-outlined text-[24px] text-primary">key</span>
             </div>
             <h1 className="font-headline-lg text-headline-lg tracking-tight text-on-surface mb-0.5 uppercase font-semibold">
-              Requisito de Configuración
+              Requisito de ConfiguraciÃ³n
             </h1>
             <p className="font-body-md text-body-md text-on-surface-variant mt-2">
               Para que The Guardian of Kaliche funcione, necesitas proveer una <strong>API Key de Google Gemini</strong>.
@@ -119,7 +119,7 @@ export const SessionSetup: React.FC<SessionSetupProps> = ({ onSessionInitialized
               </p>
               <div className="flex items-center gap-space-xs flex-wrap justify-center">
                 <span className="bg-surface-container text-on-surface-variant font-label-sm text-label-sm px-1.5 py-0.5 rounded uppercase">
-                  Aplicación de Escritorio
+                  AplicaciÃ³n de Escritorio
                 </span>
                 <span className="bg-surface-container text-primary font-label-sm text-label-sm px-1.5 py-0.5 rounded uppercase flex items-center gap-1">
                   <span className="w-1.5 h-1.5 rounded-full bg-primary inline-block"></span>
@@ -165,7 +165,7 @@ export const SessionSetup: React.FC<SessionSetupProps> = ({ onSessionInitialized
                   <div className="flex items-center justify-between">
                     <label className="font-label-sm text-label-sm uppercase tracking-wider text-outline font-medium flex items-center gap-1.5" htmlFor="target-scope">
                       <span className="material-symbols-outlined text-[14px] text-error">my_location</span>
-                      Alcance Autorizado
+                      Alcance Autorizado (IP/Dominio)
                     </label>
                     <span className="font-label-sm text-label-sm text-error">RESTRINGIDO</span>
                   </div>
@@ -183,11 +183,31 @@ export const SessionSetup: React.FC<SessionSetupProps> = ({ onSessionInitialized
                   </div>
                 </div>
 
+                {/* TARGET PORTS SECTION */}
+                <div className="flex flex-col gap-1 mt-space-sm">
+                  <div className="flex items-center justify-between">
+                    <label className="font-label-sm text-label-sm uppercase tracking-wider text-outline font-medium flex items-center gap-1.5" htmlFor="target-ports">
+                      <span className="material-symbols-outlined text-[14px] text-tertiary">lan</span>
+                      Puertos Permitidos
+                    </label>
+                    <span className="font-label-sm text-label-sm text-tertiary">OPCIONAL</span>
+                  </div>
+                  <div className="relative bg-surface-container border border-outline-variant rounded flex items-center px-space-sm py-1 focus-within:border-tertiary/50 transition-colors">
+                    <span className="material-symbols-outlined text-[16px] text-tertiary mr-2">settings_ethernet</span>
+                    <input 
+                      id="target-ports" 
+                      type="text" 
+                      placeholder="Ej. 80, 443, 8080-8090 o dejar en blanco" 
+                      className="w-full bg-transparent font-label-md text-label-md text-on-surface focus:outline-none placeholder-outline" 
+                    />
+                  </div>
+                </div>
+
                 {/* ZERO-TRUST ENGAGEMENT POLICY SECTION */}
                 <div className="flex flex-col gap-1 mt-space-sm">
                   <label className="font-label-sm text-label-sm uppercase tracking-wider text-outline font-medium flex items-center gap-1.5 mb-1">
                     <span className="material-symbols-outlined text-[14px] text-tertiary">gavel</span>
-                    Política de Intervención Zero-Trust
+                    PolÃ­tica de IntervenciÃ³n Zero-Trust
                   </label>
                   
                   <div className="grid grid-cols-2 gap-space-sm">
@@ -216,7 +236,7 @@ export const SessionSetup: React.FC<SessionSetupProps> = ({ onSessionInitialized
                         </span>
                       </div>
                       <span className="font-body-sm text-[10px] leading-tight text-on-surface-variant">
-                        La IA sugiere comandos. El operador aprueba explícitamente su ejecución.
+                        La IA sugiere comandos. El operador aprueba explÃ­citamente su ejecuciÃ³n.
                       </span>
                     </label>
 
@@ -245,7 +265,7 @@ export const SessionSetup: React.FC<SessionSetupProps> = ({ onSessionInitialized
                         </span>
                       </div>
                       <span className="font-body-sm text-[10px] leading-tight text-on-surface-variant">
-                        La IA ejecuta comandos seguros automáticamente. Alto riesgo requiere aprobación.
+                        La IA ejecuta comandos seguros automÃ¡ticamente. Alto riesgo requiere aprobaciÃ³n.
                       </span>
                     </label>
                   </div>
@@ -265,7 +285,7 @@ export const SessionSetup: React.FC<SessionSetupProps> = ({ onSessionInitialized
                     ) : (
                       <>
                         <span className="material-symbols-outlined text-[18px]">lock_open</span>
-                        Iniciar Sesión Segura
+                        Iniciar SesiÃ³n Segura
                       </>
                     )}
                   </span>
