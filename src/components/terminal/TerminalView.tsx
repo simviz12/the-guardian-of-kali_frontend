@@ -1,7 +1,3 @@
-/**
- * React interactive terminal component powered by xterm.js and the FitAddon.
- * Connected via the secure preload IPC channel to a live Kali Linux WSL2 session.
- */
 import React, { useEffect, useRef, useState } from 'react';
 import { Terminal } from '@xterm/xterm';
 import { FitAddon } from '@xterm/addon-fit';
@@ -29,51 +25,33 @@ export const TerminalView: React.FC = () => {
     }
     setWslError(null);
 
-    if (!terminalContainerRef.current) {
-      return;
-    }
+    if (!terminalContainerRef.current) return;
 
-    // 1. Initialize xterm.js instance with Kali-styled dark theme
     const term = new Terminal({
       cursorBlink: true,
       cursorStyle: 'block',
-      fontFamily: 'Consolas, "Fira Code", monospace',
-      fontSize: 14,
+      fontFamily: '"JetBrains Mono", Consolas, "Fira Code", monospace',
+      fontSize: 13,
       theme: {
         background: '#0c0e14',
         foreground: '#e6edf3',
-        cursor: '#00ff66',
-        selectionBackground: 'rgba(56, 189, 248, 0.3)',
-        black: '#0c0e14',
-        red: '#ff5555',
-        green: '#50fa7b',
-        yellow: '#f1fa8c',
-        blue: '#bd93f9',
-        magenta: '#ff79c6',
-        cyan: '#8be9fd',
-        white: '#bfbfbf',
+        cursor: '#4edea3', // primary color
+        selectionBackground: 'rgba(78, 222, 163, 0.3)',
       },
     });
 
-    // 2. Attach the Fit Addon for dynamic auto-sizing
     const fitAddon = new FitAddon();
     term.loadAddon(fitAddon);
-
-    // 3. Open the terminal inside the container element
     term.open(terminalContainerRef.current);
     fitAddon.fit();
 
     terminalInstanceRef.current = term;
     fitAddonRef.current = fitAddon;
 
-    // 4. Forward keystrokes and user inputs to the WSL pseudoterminal
     const onDataDisposable = term.onData((data: string) => {
-      if (window.terminalAPI) {
-        window.terminalAPI.sendInput(data);
-      }
+      if (window.terminalAPI) window.terminalAPI.sendInput(data);
     });
 
-    // 5. Subscribe to real-time streaming output from Kali Linux
     let unsubscribeOutput: (() => void) | undefined;
     if (window.terminalAPI) {
       unsubscribeOutput = window.terminalAPI.onOutput((data: string) => {
@@ -81,36 +59,23 @@ export const TerminalView: React.FC = () => {
       });
     }
 
-    // 6. Handle container and window resize events dynamically
     const handleResize = () => {
-      try {
-        fitAddon.fit();
-      } catch (err) {
-        console.warn('Error refitting terminal:', err);
-      }
+      try { fitAddon.fit(); } catch (err) {}
     };
 
-    const resizeObserver = new ResizeObserver(() => {
-      handleResize();
-    });
-
+    const resizeObserver = new ResizeObserver(() => handleResize());
     if (terminalContainerRef.current) {
       resizeObserver.observe(terminalContainerRef.current);
     }
 
     window.addEventListener('resize', handleResize);
-
-    // Initial focus on the terminal
     term.focus();
 
-    // 7. Cleanup resources on unmount
     return () => {
       window.removeEventListener('resize', handleResize);
       resizeObserver.disconnect();
       onDataDisposable.dispose();
-      if (unsubscribeOutput) {
-        unsubscribeOutput();
-      }
+      if (unsubscribeOutput) unsubscribeOutput();
       term.dispose();
       terminalInstanceRef.current = null;
       fitAddonRef.current = null;
@@ -118,89 +83,106 @@ export const TerminalView: React.FC = () => {
     };
   }, []);
 
-  // Expose terminal text globally for the AI to read
   useEffect(() => {
     (window as any).getTerminalText = () => {
       const term = terminalInstanceRef.current;
       if (!term) return '';
       const buffer = term.buffer.active;
       let text = '';
-      const start = Math.max(0, buffer.cursorY + buffer.viewportY - 40); // Last 40 lines
+      const start = Math.max(0, buffer.cursorY + buffer.viewportY - 40);
       for (let i = start; i <= buffer.cursorY + buffer.viewportY; i++) {
         const line = buffer.getLine(i);
-        if (line) {
-          text += line.translateToString(true).trimEnd() + '\n';
-        }
+        if (line) text += line.translateToString(true).trimEnd() + '\n';
       }
       return text.trim();
     };
   }, []);
+
   return (
-    <div className="flex-1 h-full w-full bg-[#0c0e14] p-3 overflow-hidden flex flex-col relative">
+    <div className="flex flex-col h-full bg-surface-container-lowest overflow-hidden justify-between">
+      {/* Terminal Header */}
+      <div className="flex items-center justify-between px-space-xl py-space-lg bg-surface-container-low border-b border-outline-variant">
+        <div className="flex items-center gap-space-lg">
+          <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-surface-container text-primary font-terminal-stream text-terminal-stream font-bold">
+            &gt;_
+          </div>
+          <div className="flex items-center gap-space-md">
+            <span className="font-headline-sm text-headline-sm text-on-surface tracking-wide uppercase font-semibold">
+              Kali Linux Terminal
+            </span>
+            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-primary/10 text-primary font-label-sm text-label-sm font-medium">
+              <span className="w-1.5 h-1.5 rounded-full bg-primary"></span>
+              WSL2 CONNECTED
+            </span>
+          </div>
+        </div>
+      </div>
+      
+      {/* Web Preview Mock Banner for Debug */}
       {wslError && !bannerDismissed && (
-        <div className="absolute inset-x-4 top-4 z-20 shadow-2xl">
-          <div className="rounded-xl border border-amber-500/40 bg-zinc-900/95 p-4 text-zinc-100 backdrop-blur-md flex items-start justify-between gap-4">
+        <div className="absolute inset-x-4 top-24 z-20 shadow-2xl">
+          <div className="rounded-xl border border-tertiary-container bg-surface-container-high p-4 flex items-start justify-between gap-4">
             <div className="flex items-start space-x-3.5">
-              <span className="text-2xl">🐧</span>
+              <span className="material-symbols-outlined text-[24px] text-tertiary">warning</span>
               <div>
-                <div className="flex items-center space-x-2">
-                  <h3 className="text-sm font-bold text-zinc-100">Modo Navegador Web Activo</h3>
-                  <span className="rounded bg-amber-500/20 px-2 py-0.5 text-[10px] font-mono text-amber-300 font-bold border border-amber-500/30">
-                    Vista Previa Web
-                  </span>
-                </div>
-                <p className="mt-1 text-xs text-zinc-300 leading-relaxed">
-                  Los comandos de escaneo y pruebas que propone el <strong>Copiloto Gemini</strong> se ejecutan y devuelven su salida en la tarjeta del chat y en la pestaña <strong>Session History</strong>.
-                </p>
-                <p className="mt-1.5 text-[11px] text-zinc-400 font-mono">
-                  Para tener la terminal interactiva con acceso directo a la shell de Kali Linux en WSL2, abre una terminal y escribe: <code className="text-emerald-400 bg-zinc-950 px-1.5 py-0.5 rounded">npm start</code>
+                <h3 className="font-headline-sm text-headline-sm text-on-surface uppercase tracking-wider">Web Browser Preview</h3>
+                <p className="mt-1 font-body-sm text-body-sm text-on-surface-variant">
+                  Run <code className="bg-surface-container text-primary px-1 py-0.5 rounded">npm start</code> to connect natively to WSL2.
                 </p>
               </div>
             </div>
-            <button
-              onClick={() => setBannerDismissed(true)}
-              className="text-zinc-400 hover:text-white text-lg font-bold px-2 py-1 transition"
-              title="Cerrar aviso"
-            >
-              ×
+            <button onClick={() => setBannerDismissed(true)} className="text-on-surface-variant hover:text-on-surface">
+              <span className="material-symbols-outlined text-[20px]">close</span>
             </button>
           </div>
         </div>
       )}
-      <div
-        ref={terminalContainerRef}
-        className="flex-1 w-full h-full overflow-hidden"
-      />
-      
-      {/* Command Input Bar */}
-      <form 
-        onSubmit={(e) => {
-          e.preventDefault();
-          if (cmdInput.trim() && window.terminalAPI) {
-            window.terminalAPI.sendInput(cmdInput + '\r');
-            setCmdInput('');
-          }
-        }}
-        className="mt-3 flex items-center gap-2 bg-zinc-950/80 border border-zinc-800 rounded-lg p-1.5 focus-within:border-emerald-500/50 focus-within:ring-1 focus-within:ring-emerald-500/50 transition-all"
-      >
-        <span className="text-emerald-500 font-mono pl-3 font-bold">┌──(carlos㉿kali)-[~]<br/>└─$</span>
-        <input
-          type="text"
-          value={cmdInput}
-          onChange={(e) => setCmdInput(e.target.value)}
-          placeholder="Pega o escribe un comando aquí y presiona Enter..."
-          className="flex-1 bg-transparent border-none text-zinc-100 font-mono text-sm focus:outline-none focus:ring-0 px-2"
-          autoComplete="off"
-          spellCheck={false}
-        />
-        <button
-          type="submit"
-          disabled={!cmdInput.trim()}
-          className="bg-emerald-600/20 text-emerald-400 hover:bg-emerald-500 hover:text-zinc-950 border border-emerald-500/30 font-bold px-4 py-1.5 rounded-md text-xs uppercase tracking-wider transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+
+      {/* Terminal Viewport */}
+      <div className="flex-1 p-space-md bg-[#0c0e14] overflow-hidden relative">
+        <div ref={terminalContainerRef} className="h-full w-full" />
+      </div>
+
+      {/* Terminal Input Strip */}
+      <div className="bg-surface-container-low p-space-lg flex flex-col gap-space-md shadow-inner border-t border-outline-variant">
+        <form 
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (cmdInput.trim() && window.terminalAPI) {
+              window.terminalAPI.sendInput(cmdInput + '\r');
+              setCmdInput('');
+            }
+          }} 
+          className="flex items-center gap-space-md"
         >
-          Ejecutar
-        </button>
-      </form>
+          <div className="relative flex-1 flex items-center">
+            <span className="absolute left-4 text-primary font-terminal-stream font-bold text-lg select-none">&gt;</span>
+            <input
+              type="text"
+              value={cmdInput}
+              onChange={(e) => setCmdInput(e.target.value)}
+              placeholder="Type your command here (e.g. nmap -sV 10.10.10.10)..."
+              className="w-full bg-surface-container font-terminal-stream text-on-surface placeholder:text-outline text-base rounded-lg pl-10 pr-4 py-3 focus:outline-none focus:bg-surface-container-high transition-colors"
+              autoComplete="off"
+              spellCheck={false}
+            />
+          </div>
+          <button 
+            type="submit" 
+            disabled={!cmdInput.trim()}
+            className="bg-primary text-on-primary hover:bg-surface-tint font-headline-sm text-headline-sm font-semibold px-space-xl py-3 rounded-lg flex items-center gap-2 transition disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <span className="material-symbols-outlined text-[18px]">terminal</span>
+            RUN COMMAND
+          </button>
+        </form>
+        <div className="flex items-center justify-between px-space-xs font-label-sm text-label-sm text-on-surface-variant">
+          <span className="flex items-center gap-1.5">
+            <span className="material-symbols-outlined text-[14px] text-outline">keyboard_return</span>
+            Press ↵ Enter to execute directly into WSL2 session
+          </span>
+        </div>
+      </div>
     </div>
   );
 };

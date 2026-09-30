@@ -5,33 +5,26 @@ import { SessionHistory } from './components/history/SessionHistory';
 import { SessionSetup } from './components/session/SessionSetup';
 import { ErrorBoundary } from './components/common/ErrorBoundary';
 import { GlobalErrorBanner } from './components/common/GlobalErrorBanner';
-import { apiClient, parseAppError } from './services/apiClient';
 import { ActiveSessionConfig } from './types/session';
+import { apiClient } from './services/apiClient';
 import { AppErrorDetails } from './types/errors';
+import { parseAppError } from './services/apiClient';
 
-export const AppContent: React.FC = () => {
+const AppContent: React.FC = () => {
   const [activeSession, setActiveSession] = useState<ActiveSessionConfig | null>(() => {
-    const saved = localStorage.getItem('guardian-session-config');
+    const saved = localStorage.getItem('guardian-session-id');
     if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch (e) {
-        return null;
-      }
+      return {
+        sessionId: saved,
+        operationMode: 'suggestion',
+        authorizedTargets: [],
+        isActive: true,
+      };
     }
     return null;
   });
 
-  useEffect(() => {
-    if (activeSession) {
-      localStorage.setItem('guardian-session-config', JSON.stringify(activeSession));
-    } else {
-      localStorage.removeItem('guardian-session-config');
-    }
-  }, [activeSession]);
   const [activeTab, setActiveTab] = useState<'terminal' | 'history'>('terminal');
-
-  // Backend connectivity tracking
   const [backendStatus, setBackendStatus] = useState<'online' | 'offline' | 'checking'>('checking');
   const [backendError, setBackendError] = useState<AppErrorDetails | null>(null);
 
@@ -50,21 +43,15 @@ export const AppContent: React.FC = () => {
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
-    
-    // Función recursiva para intentar conectar rápido al principio
     const connectToBackend = async () => {
       const isOnline = await checkBackendHealth();
       if (!isOnline) {
-        // Si falló, intentar de nuevo rápido (cada 2 segundos)
         setTimeout(connectToBackend, 2000);
       } else {
-        // Una vez online, pasar a chequeo lento (cada 15s)
         interval = setInterval(checkBackendHealth, 15000);
       }
     };
-    
     connectToBackend();
-    
     return () => {
       if (interval) clearInterval(interval);
     };
@@ -72,173 +59,106 @@ export const AppContent: React.FC = () => {
 
   if (!activeSession) {
     return (
-      <div className="flex h-screen w-screen flex-col overflow-hidden bg-zinc-950 text-zinc-100">
+      <div className="flex flex-col min-h-screen bg-surface-container-lowest text-on-surface">
         {backendStatus === 'offline' && backendError && (
-          <div className="p-3 bg-zinc-950 border-b border-zinc-800">
-            <GlobalErrorBanner
-              error={backendError}
-              onRetry={checkBackendHealth}
-              compact
-            />
+          <div className="p-3 bg-surface-dim border-b border-outline-variant">
+            <GlobalErrorBanner error={backendError} onRetry={checkBackendHealth} compact />
           </div>
         )}
-        <div className="flex-1 overflow-auto">
-          <SessionSetup
-            onSessionInitialized={(config) => setActiveSession(config)}
-          />
-        </div>
+        <SessionSetup onSessionInitialized={(config) => setActiveSession(config)} />
       </div>
     );
   }
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-zinc-950 text-zinc-100">
-      {/* Main Workspace Area */}
-      <div className="flex flex-1 flex-col overflow-hidden">
-        {/* Sleek Minimalist Navigation Bar */}
-        <header className="flex h-14 shrink-0 items-center justify-between border-b border-emerald-900/30 bg-zinc-950/95 px-4 z-20">
-          
-          {/* Left: Branding */}
-          <div className="flex items-center space-x-3 h-full">
-            <div className="flex items-center space-x-2 border-r border-zinc-800 pr-3">
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
-              <h1 className="text-sm font-black tracking-widest text-zinc-100 uppercase truncate">
-                THE GUARDIAN <span className="text-emerald-400">OF KALICHE</span>
-              </h1>
+    <div className="bg-surface-container-lowest text-on-surface font-body-sm text-body-sm select-none min-h-screen overflow-hidden">
+      <header className="fixed top-0 left-0 right-0 z-50 flex flex-col bg-surface-container-lowest border-b border-outline-variant">
+        <div className="h-8 px-margin flex items-center justify-between bg-surface-dim text-on-surface">
+          <div className="flex items-center gap-space-sm">
+            <span className="font-label-sm text-label-sm uppercase font-semibold text-primary tracking-wider">THE GUARDIAN OF KALICHE</span>
+            <span className="font-label-sm text-label-sm px-space-xs py-0.5 bg-surface-container-low text-on-surface-variant border border-outline-variant rounded">WSL2 NATIVE</span>
+            <span className="font-label-sm text-label-sm px-space-xs py-0.5 bg-surface-container-low text-tertiary border border-outline-variant rounded">
+              SCOPE: {activeSession.authorizedTargets[0]?.value || '10.10.10.10'}
+            </span>
+          </div>
+          <div className="flex items-center gap-space-md">
+            <div className="flex items-center gap-space-xs font-label-sm text-label-sm text-on-surface-variant">
+              <span className={`w-1.5 h-1.5 rounded-full ${backendStatus === 'online' ? 'bg-primary-container animate-pulse' : 'bg-error'}`}></span>
+              <span>API {backendStatus === 'online' ? 'OK' : 'FAIL'}</span>
             </div>
-            
-            {/* Badges */}
-            <div className="hidden sm:flex items-center space-x-2">
-              <span className="rounded bg-zinc-900 px-2 py-0.5 text-[9px] font-mono text-zinc-400 border border-zinc-800">
-                WSL2 NATIVE
-              </span>
-              <span
-                className={`rounded px-2 py-0.5 text-[9px] font-mono uppercase font-bold border ${
-                  activeSession.operationMode === 'autonomous'
-                    ? 'bg-amber-500/10 text-amber-400 border-amber-500/20'
-                    : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                }`}
-              >
-                MODO: {activeSession.operationMode === 'autonomous' ? 'AUTÓNOMO' : 'SUGERENCIA'}
-              </span>
-              <span className="rounded bg-zinc-900 px-2 py-0.5 text-[9px] font-mono text-zinc-400 border border-zinc-800 hidden lg:inline">
-                ALCANCE: <strong className="text-zinc-200">{activeSession.authorizedTargets.length} OBJ</strong>
-              </span>
+            <div className="w-5 h-5 rounded-full bg-primary flex items-center justify-center ml-2">
+              <span className="material-symbols-outlined text-on-primary text-[14px]">person</span>
             </div>
           </div>
-
-          {/* Right: Controls & Status */}
-          <div className="flex items-center space-x-4 h-full">
-            {/* Backend Connectivity */}
-            <div
-              title={
-                backendStatus === 'online'
-                  ? 'El backend está conectado'
-                  : 'El backend está desconectado'
-              }
-              className={`flex items-center space-x-1.5 px-2 py-1 text-[10px] uppercase font-mono font-bold tracking-wider ${
-                backendStatus === 'online'
-                  ? 'text-emerald-400'
-                  : backendStatus === 'offline'
-                  ? 'text-red-400 animate-pulse'
-                  : 'text-zinc-500'
-              }`}
-            >
-              <div
-                className={`h-1.5 w-1.5 rounded-full ${
-                  backendStatus === 'online'
-                    ? 'bg-emerald-400 shadow-[0_0_5px_#34d399]'
-                    : backendStatus === 'offline'
-                    ? 'bg-red-400 shadow-[0_0_5px_#f87171]'
-                    : 'bg-zinc-500'
-                }`}
-              />
-              <span className="hidden sm:inline">{backendStatus === 'online' ? 'API OK' : 'API FAIL'}</span>
-            </div>
-
-            <div className="w-px h-4 bg-zinc-800 hidden sm:block"></div>
-
-            {/* View Mode Selector */}
-            <nav className="flex items-center rounded-md bg-zinc-900 border border-zinc-800 p-0.5">
-              <button
-                onClick={() => setActiveTab('terminal')}
-                className={`px-3 py-1 text-[10px] font-bold rounded-sm transition-all uppercase tracking-wider ${
-                  activeTab === 'terminal'
-                    ? 'bg-emerald-500/20 text-emerald-400'
-                    : 'text-zinc-500 hover:text-zinc-300 transparent'
-                }`}
-              >
-                Terminal
-              </button>
-              <button
-                onClick={() => setActiveTab('history')}
-                className={`px-3 py-1 text-[10px] font-bold rounded-sm transition-all uppercase tracking-wider ${
-                  activeTab === 'history'
-                    ? 'bg-emerald-500/20 text-emerald-400'
-                    : 'text-zinc-500 hover:text-zinc-300 transparent'
-                }`}
-              >
-                Historial
-              </button>
-            </nav>
-
-            <button
-              onClick={() => {
-                localStorage.removeItem('guardian-session-id');
-                setActiveSession(null);
-              }}
-              title="Terminar Sesión"
-              className="p-1.5 text-zinc-500 hover:bg-red-500/10 hover:text-red-400 hover:border-red-500/30 rounded border border-transparent transition-all ml-1"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+        </div>
+        <div className="h-9 px-margin flex items-center justify-between bg-surface-container-low border-t border-outline-variant">
+          <nav className="flex items-center gap-space-xs h-full">
+            <button onClick={() => setActiveTab('terminal')} className={`h-full px-space-md flex items-center transition-colors font-label-md text-label-md ${activeTab === 'terminal' ? 'bg-surface-container-high text-primary border-b border-primary font-semibold' : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container'}`}>
+              TERMINAL
+            </button>
+            <button onClick={() => setActiveTab('history')} className={`h-full px-space-md flex items-center transition-colors font-label-md text-label-md ${activeTab === 'history' ? 'bg-surface-container-high text-primary border-b border-primary font-semibold' : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container'}`}>
+              HISTORY
+            </button>
+          </nav>
+          <div className="flex items-center">
+            <button 
+              onClick={() => { localStorage.removeItem('guardian-session-id'); setActiveSession(null); }}
+              className="px-space-md py-1 border border-error-container text-error hover:bg-error-container hover:text-on-error-container font-label-sm text-label-sm uppercase rounded transition-colors flex items-center gap-space-xs">
+              <span className="material-symbols-outlined text-[14px]">power_settings_new</span>
+              EXIT SESSION
             </button>
           </div>
-        </header>
+        </div>
+      </header>
 
-        {/* Global Error Banner if backend goes offline during session */}
-        {backendStatus === 'offline' && backendError && (
-          <div className="p-2 border-b border-zinc-800 bg-zinc-950">
-            <GlobalErrorBanner
-              error={backendError}
-              onRetry={checkBackendHealth}
-              compact
-            />
-          </div>
-        )}
+      <aside className="fixed left-0 top-[68px] bottom-6 w-11 bg-surface-dim border-r border-outline-variant z-40 flex flex-col items-center py-space-sm gap-space-sm">
+        <button onClick={() => setActiveTab('terminal')} className={`w-8 h-8 flex items-center justify-center rounded transition-colors ${activeTab === 'terminal' ? 'text-primary bg-surface-container' : 'text-on-surface-variant hover:bg-surface-container hover:text-primary'}`} title="Terminal Matrix">
+          <span className="material-symbols-outlined text-[18px]">terminal</span>
+        </button>
+        <button onClick={() => setActiveTab('history')} className={`w-8 h-8 flex items-center justify-center rounded transition-colors ${activeTab === 'history' ? 'text-primary bg-surface-container' : 'text-on-surface-variant hover:bg-surface-container hover:text-primary'}`} title="System Audit Log">
+          <span className="material-symbols-outlined text-[18px]">receipt_long</span>
+        </button>
+      </aside>
 
-        {/* Tab Content View */}
-        <main className="flex-1 overflow-hidden relative">
-          <div className={`h-full w-full ${activeTab === 'terminal' ? 'block' : 'hidden'}`}>
-            <TerminalView />
-          </div>
+      <div className="pl-11 h-screen flex flex-col pt-[68px] pb-6">
+        <main className="flex-1 w-full bg-surface-container-lowest overflow-hidden flex">
+          {activeTab === 'terminal' && (
+            <div className="w-full max-w-[1720px] mx-auto p-space-xl flex flex-col gap-space-lg h-full overflow-hidden">
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-space-xl items-stretch h-full overflow-hidden">
+                <section className="lg:col-span-8 flex flex-col bg-surface-container-lowest rounded-xl shadow-xl overflow-hidden border border-outline-variant">
+                  <TerminalView />
+                </section>
+                <section className="lg:col-span-4 flex flex-col bg-surface-container-low rounded-xl shadow-xl overflow-hidden border border-outline-variant">
+                  <ChatPanel activeSession={activeSession} />
+                </section>
+              </div>
+            </div>
+          )}
           {activeTab === 'history' && (
-            <div className="h-full w-full p-3 overflow-hidden">
-              <SessionHistory
-                // No pasamos sessionId para que el backend nos devuelva el historial global completo
-                onSelectCommand={(cmdText) => {
-                  setActiveTab('terminal');
-                  if (window.terminalAPI) {
-                    window.terminalAPI.sendInput(cmdText + '\n');
-                  }
-                }}
-              />
+            <div className="w-full overflow-y-auto">
+              <SessionHistory />
             </div>
           )}
         </main>
       </div>
 
-      {/* AI Co-pilot Chat Sidebar */}
-      <ChatPanel activeSession={activeSession} />
+      <footer className="fixed bottom-0 left-0 right-0 h-6 bg-surface-dim border-t border-outline-variant z-50 px-margin flex items-center justify-between font-label-sm text-label-sm text-on-surface-variant">
+        <div className="flex items-center gap-space-md">
+          <span>PIPE: TUN0 (SECURE)</span>
+          <span>SESSION STATUS: ENFORCED</span>
+        </div>
+        <div className="flex items-center gap-space-md">
+          <span className="text-primary">WSL2 KERNEL: 5.15.150.1</span>
+        </div>
+      </footer>
     </div>
   );
 };
 
-export const App: React.FC = () => {
-  return (
-    <ErrorBoundary>
-      <AppContent />
-    </ErrorBoundary>
-  );
-};
+export const App: React.FC = () => (
+  <ErrorBoundary>
+    <AppContent />
+  </ErrorBoundary>
+);
 
 export default App;

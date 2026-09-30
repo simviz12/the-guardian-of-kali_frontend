@@ -1,358 +1,227 @@
-/**
- * SessionSetup component.
- *
- * Initial configuration gatekeeper screen where the operator must define:
- * 1. Authorized target IP, CIDR subnet, or domain ranges (Zero-Trust scope).
- * 2. Operational mode (Suggestion mode vs. Autonomous mode).
- *
- * Terminal Console and AI Chat remain locked until session parameters are initialized.
- */
 import React, { useState } from 'react';
-import {
-  ActiveSessionConfig,
-  AuthorizedTargetConfig,
-  OperationMode,
-} from '../../types/session';
+import { ActiveSessionConfig, AuthorizedTargetConfig, OperationMode } from '../../types/session';
 
 export interface SessionSetupProps {
   onSessionInitialized: (config: ActiveSessionConfig) => void;
 }
 
-// Regex to validate IPv4, IPv4 CIDR, or domain FQDN
-const IPV4_CIDR_REGEX =
-  /^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(\/(3[0-2]|[12]?[0-9]))?$/;
-const DOMAIN_REGEX =
-  /^([a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$/;
-
-export const SessionSetup: React.FC<SessionSetupProps> = ({
-  onSessionInitialized,
-}) => {
-  const [targetInput, setTargetInput] = useState('');
-  const [targetDescInput, setTargetDescInput] = useState('');
-  const [targetError, setTargetError] = useState<string | null>(null);
-
-  const [targets, setTargets] = useState<AuthorizedTargetConfig[]>([
-    { value: '10.10.10.10', description: 'HackTheBox Target' },
-  ]);
-
+export const SessionSetup: React.FC<SessionSetupProps> = ({ onSessionInitialized }) => {
+  const [operatorId, setOperatorId] = useState('carlos');
+  const [targetScope, setTargetScope] = useState('10.10.10.10');
   const [operationMode, setOperationMode] = useState<OperationMode>('suggestion');
-  const [operatorUser, setOperatorUser] = useState('carlos');
+  const [isInitializing, setIsInitializing] = useState(false);
 
-  // Quick preset targets
-  const handleAddPreset = (value: string, description: string) => {
-    if (!targets.some((t) => t.value.toLowerCase() === value.toLowerCase())) {
-      setTargets((prev) => [...prev, { value, description }]);
-    }
-  };
-
-  const handleAddTarget = (e: React.FormEvent) => {
+  const simulateInit = (e: React.FormEvent) => {
     e.preventDefault();
-    const trimmed = targetInput.trim();
-    if (!trimmed) {
-      setTargetError('Por favor ingresa una IP, rango CIDR o dominio objetivo.');
-      return;
-    }
-
-    if (!IPV4_CIDR_REGEX.test(trimmed) && !DOMAIN_REGEX.test(trimmed)) {
-      setTargetError('Formato inválido. Usa IPv4 (ej. 10.10.10.15), CIDR (ej. 192.168.1.0/24) o Dominio (ej. hackthebox.com).');
-      return;
-    }
-
-    if (targets.some((t) => t.value.toLowerCase() === trimmed.toLowerCase())) {
-      setTargetError('Este objetivo ya está en la lista de alcance autorizado.');
-      return;
-    }
-
-    setTargets((prev) => [
-      ...prev,
-      {
-        value: trimmed,
-        description: targetDescInput.trim() || 'Alcance Personalizado',
-      },
-    ]);
-    setTargetInput('');
-    setTargetDescInput('');
-    setTargetError(null);
-  };
-
-  const handleRemoveTarget = (targetValue: string) => {
-    setTargets((prev) => prev.filter((t) => t.value !== targetValue));
-  };
-
-  const handleInitializeSession = () => {
-    if (targets.length === 0) {
-      setTargetError('Debes definir al menos un objetivo autorizado (IP, CIDR o dominio) antes de iniciar.');
-      return;
-    }
-
-    const previousSessionId = localStorage.getItem('guardian-session-id');
-    const finalSessionId = previousSessionId || (
-      typeof crypto !== 'undefined' && crypto.randomUUID
-        ? crypto.randomUUID()
-        : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-            const r = (Math.random() * 16) | 0;
-            const v = c === 'x' ? r : (r & 0x3) | 0x8;
-            return v.toString(16);
-          })
-    );
-
-    const config: ActiveSessionConfig = {
-      sessionId: finalSessionId,
-      user: operatorUser.trim() || 'carlos',
-      operationMode,
-      authorizedTargets: targets,
-      startedAt: new Date().toISOString(),
-    };
-
-    onSessionInitialized(config);
-  };
-
-  const handleStartNewSession = () => {
-    localStorage.removeItem('guardian-session-id');
-    handleInitializeSession();
+    setIsInitializing(true);
+    setTimeout(() => {
+      onSessionInitialized({
+        sessionId: crypto.randomUUID(),
+        operationMode,
+        authorizedTargets: [{ value: targetScope, description: 'User defined scope' }],
+        isActive: true,
+      });
+    }, 1200);
   };
 
   return (
-    <div className="flex min-h-screen w-full items-center justify-center bg-zinc-950 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(16,185,129,0.15),rgba(255,255,255,0))] p-6 md:p-10 text-zinc-100">
-      <div className="w-full max-w-4xl rounded-2xl border border-emerald-900/30 bg-zinc-900/80 p-8 md:p-10 shadow-[0_0_40px_rgba(16,185,129,0.1)] backdrop-blur-xl relative overflow-hidden">
-        {/* Decorative Grid Background */}
-        <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:40px_40px] [mask-image:radial-gradient(ellipse_60%_60%_at_50%_50%,#000_70%,transparent_100%)] opacity-20 pointer-events-none"></div>
-        
-        {/* Header */}
-        <div className="mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-zinc-800 pb-6 gap-4 relative z-10">
-          <div className="flex items-center space-x-5">
-            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-500/10 border border-emerald-500/50 text-emerald-400 shadow-[0_0_20px_rgba(16,185,129,0.3)]">
-              <span className="font-mono text-3xl">🛡️</span>
-            </div>
-            <div>
-              <h1 className="text-2xl md:text-3xl font-black tracking-wide text-zinc-100 drop-shadow-md">
-                THE GUARDIAN <span className="text-emerald-400">OF KALICHE</span>
+    <div className="bg-surface-container-lowest text-on-surface font-body-sm text-body-sm flex items-center justify-center min-h-screen">
+      <main className="w-full max-w-md p-space-xl border border-outline-variant bg-surface-dim">
+        <div className="flex flex-col w-full">
+          <div className="flex flex-col items-center justify-center p-space-sm sm:p-space-lg w-full">
+            
+            {/* Centered Application Identity Header */}
+            <div className="flex flex-col items-center text-center mb-space-lg">
+              <h1 className="font-headline-lg text-headline-lg tracking-tight text-on-surface mb-0.5 uppercase font-semibold">
+                The Guardian of Kaliche
               </h1>
-              <p className="text-xs md:text-sm text-zinc-400 mt-1 font-mono uppercase tracking-wider">
-                &gt; Inicializando Entorno de Seguridad Zero-Trust...
+              <p className="font-label-sm text-label-sm uppercase tracking-widest text-outline mb-space-sm font-medium">
+                Security Operations Console
               </p>
+              <div className="flex items-center gap-space-xs flex-wrap justify-center">
+                <span className="bg-surface-container text-on-surface-variant font-label-sm text-label-sm px-1.5 py-0.5 rounded uppercase">
+                  Desktop Application
+                </span>
+                <span className="bg-surface-container text-primary font-label-sm text-label-sm px-1.5 py-0.5 rounded uppercase flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-primary inline-block"></span>
+                  WSL2 Native
+                </span>
+                <span className="bg-surface-container text-tertiary font-label-sm text-label-sm px-1.5 py-0.5 rounded uppercase">
+                  Kali Linux
+                </span>
+              </div>
             </div>
-          </div>
-          <div className="flex items-center space-x-3 self-end sm:self-center">
-            <span className="rounded-lg bg-black/50 px-4 py-2 text-xs md:text-sm font-mono text-emerald-400 border border-emerald-900/50 font-bold shadow-[0_0_10px_rgba(16,185,129,0.1)]">
-              WSL2 // GATEWAY
-            </span>
-          </div>
-        </div>
 
-        {/* Form Body - ensuring relative z-10 so inputs work over the background */}
-        <div className="relative z-10">
-          {/* 1. Operator Information */}
-          <div className="mb-8">
-            <label className="block text-xs md:text-sm font-bold uppercase tracking-wider text-emerald-400 mb-2.5">
-              1. Identidad de Operador
-            </label>
-            <input
-              type="text"
-              value={operatorUser}
-              onChange={(e) => setOperatorUser(e.target.value)}
-            placeholder="Usuario operador (ej. carlos)"
-            className="w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-base text-zinc-100 placeholder-zinc-500 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 focus:outline-none transition font-mono"
-          />
-          <p className="mt-1 text-[11px] text-zinc-500">
-            Los comandos de este usuario se ejecutan como operador manual; los comandos IA se ejecutan en WSL2 como usuario restringido <code className="text-zinc-400">ia-user</code>.
-          </p>
-        </div>
+            {/* Core Initialization Workstation Card */}
+            <div className="w-full bg-surface-container-low rounded-lg p-space-md sm:p-space-lg shadow-xl relative overflow-hidden">
+              <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-primary to-transparent opacity-80"></div>
+              
+              <form className="flex flex-col gap-space-md" onSubmit={simulateInit}>
+                {/* OPERATOR IDENTITY SECTION */}
+                <div className="flex flex-col gap-1">
+                  <div className="flex items-center justify-between">
+                    <label className="font-label-sm text-label-sm uppercase tracking-wider text-outline font-medium flex items-center gap-1.5" htmlFor="operator-id">
+                      <span className="material-symbols-outlined text-[14px] text-primary">badge</span>
+                      Operator Identity
+                    </label>
+                    <span className="font-label-sm text-label-sm text-outline">SESSION ID: #0x9F41</span>
+                  </div>
+                  <div className="relative bg-surface-container rounded flex items-center px-space-sm py-1 focus-within:bg-surface-container-high transition-colors">
+                    <span className="material-symbols-outlined text-[16px] text-outline mr-2">person</span>
+                    <input 
+                      id="operator-id" 
+                      type="text" 
+                      required 
+                      value={operatorId}
+                      onChange={(e) => setOperatorId(e.target.value)}
+                      placeholder="operator_alias" 
+                      className="w-full bg-transparent font-label-md text-label-md text-on-surface focus:outline-none placeholder-outline" 
+                    />
+                    <span className="w-1.5 h-3.5 bg-primary animate-pulse ml-1 inline-block"></span>
+                  </div>
+                  <p className="font-body-sm text-body-sm text-outline">
+                    Identify the operator responsible for this security session.
+                  </p>
+                </div>
 
-        {/* 2. Authorized Targets Scope (Zero-Trust Boundary) */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-1">
-            <label className="text-xs md:text-sm font-bold uppercase tracking-wider text-emerald-400">
-              2. Alcance de Objetivos Autorizados (Frontera Zero-Trust)
-            </label>
-            <span className="text-xs md:text-sm text-emerald-400 font-mono font-semibold">
-              {targets.length} objetivo{targets.length === 1 ? '' : 's'} definido{targets.length === 1 ? '' : 's'}
-            </span>
-          </div>
-          <p className="text-xs text-zinc-400 mb-4 bg-zinc-950/50 p-3 rounded-lg border border-zinc-800/50 leading-relaxed">
-            <strong className="text-zinc-200">¿Qué es esto?</strong> Aquí defines qué máquinas o redes puede atacar/escanear la IA. Es una medida de seguridad (Zero-Trust) para evitar que el asistente ejecute comandos peligrosos contra IPs de tu red doméstica o servidores reales por error. <span className="text-emerald-400 font-medium">La IA será bloqueada automáticamente si intenta salir de este alcance.</span>
-          </p>
-
-          {/* Quick Presets */}
-          <div className="mb-3.5 flex flex-wrap gap-2.5">
-            <button
-              type="button"
-              onClick={() => handleAddPreset('10.10.10.0/24', 'Subred HackTheBox')}
-              className="rounded-lg bg-zinc-800 hover:bg-zinc-700 px-3 py-1.5 text-xs md:text-sm text-zinc-200 transition border border-zinc-700 font-mono"
-            >
-              + Subred HTB (10.10.10.0/24)
-            </button>
-            <button
-              type="button"
-              onClick={() => handleAddPreset('10.10.0.0/16', 'Red TryHackMe')}
-              className="rounded-lg bg-zinc-800 hover:bg-zinc-700 px-3 py-1.5 text-xs md:text-sm text-zinc-200 transition border border-zinc-700 font-mono"
-            >
-              + Red THM (10.10.0.0/16)
-            </button>
-            <button
-              type="button"
-              onClick={() => handleAddPreset('hackthebox.com', 'Dominio HTB')}
-              className="rounded-lg bg-zinc-800 hover:bg-zinc-700 px-3 py-1.5 text-xs md:text-sm text-zinc-200 transition border border-zinc-700 font-mono"
-            >
-              + hackthebox.com
-            </button>
-            <button
-              type="button"
-              onClick={() => handleAddPreset('127.0.0.1', 'Diagnóstico Localhost')}
-              className="rounded-lg bg-zinc-800 hover:bg-zinc-700 px-3 py-1.5 text-xs md:text-sm text-zinc-200 transition border border-zinc-700 font-mono"
-            >
-              + Localhost (127.0.0.1)
-            </button>
-          </div>
-
-          {/* Add Target Input Form */}
-          <form onSubmit={handleAddTarget} className="flex flex-col sm:flex-row gap-3">
-            <input
-              type="text"
-              value={targetInput}
-              onChange={(e) => {
-                setTargetInput(e.target.value);
-                setTargetError(null);
-              }}
-              placeholder="ej. 10.10.10.10, 192.168.1.0/24, example.htb"
-              className="flex-1 rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-sm md:text-base text-zinc-100 placeholder-zinc-500 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 focus:outline-none transition font-mono"
-            />
-            <input
-              type="text"
-              value={targetDescInput}
-              onChange={(e) => setTargetDescInput(e.target.value)}
-              placeholder="Descripción (opcional)"
-              className="sm:w-52 rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-sm md:text-base text-zinc-100 placeholder-zinc-500 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 focus:outline-none transition"
-            />
-            <button
-              type="submit"
-              className="rounded-xl bg-zinc-800 hover:bg-zinc-700 px-5 py-3 text-sm font-bold text-zinc-100 border border-zinc-700 transition active:scale-95 shadow-md cursor-pointer"
-            >
-              Agregar Objetivo
-            </button>
-          </form>
-
-          {targetError && (
-            <p className="mt-2 text-xs md:text-sm text-rose-400 font-medium">{targetError}</p>
-          )}
-
-          {/* Target List Badges */}
-          <div className="mt-3 flex flex-wrap gap-2.5 max-h-40 overflow-y-auto p-3 rounded-xl bg-zinc-950 border border-zinc-800/80">
-            {targets.length === 0 ? (
-              <span className="text-xs md:text-sm text-zinc-500 italic p-1">
-                No hay objetivos definidos. El copiloto IA estará restringido de ejecutar comandos de escaneo remotos.
-              </span>
-            ) : (
-              targets.map((t) => (
-                <span
-                  key={t.value}
-                  className="inline-flex items-center gap-2 rounded-lg bg-zinc-900 px-3 py-1.5 text-xs md:text-sm font-mono text-zinc-200 border border-zinc-700 shadow-sm"
-                >
-                  <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_#34d399]" />
-                  <span className="font-semibold">{t.value}</span>
-                  {t.description && (
-                    <span className="text-xs text-zinc-400 font-sans">
-                      ({t.description})
+                {/* ZERO-TRUST BOUNDARY SECTION */}
+                <div className="flex flex-col gap-1">
+                  <div className="flex items-center justify-between">
+                    <label className="font-label-sm text-label-sm uppercase tracking-wider text-outline font-medium flex items-center gap-1.5" htmlFor="target-scope">
+                      <span className="material-symbols-outlined text-[14px] text-primary">verified_user</span>
+                      Authorized Security Scope
+                    </label>
+                    <span className="bg-surface-container text-primary font-label-sm text-label-sm px-1.5 py-0.5 rounded flex items-center gap-1 font-semibold uppercase">
+                      <span className="material-symbols-outlined text-[12px]">shield</span>
+                      Boundary Active
                     </span>
-                  )}
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveTarget(t.value)}
-                    className="ml-1 text-zinc-400 hover:text-rose-400 font-sans text-base leading-none transition"
-                    title="Eliminar objetivo"
+                  </div>
+                  <div className="relative bg-surface-container rounded flex items-center px-space-sm py-1 focus-within:bg-surface-container-high transition-colors">
+                    <span className="material-symbols-outlined text-[16px] text-outline mr-2">target</span>
+                    <input 
+                      id="target-scope" 
+                      type="text" 
+                      required 
+                      value={targetScope}
+                      onChange={(e) => setTargetScope(e.target.value)}
+                      placeholder="CIDR, IP, or Target Hostname" 
+                      className="w-full bg-transparent font-terminal-stream text-terminal-stream text-on-surface focus:outline-none placeholder-outline" 
+                    />
+                  </div>
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <span className="font-label-sm text-label-sm text-outline">Presets:</span>
+                    <button type="button" onClick={() => setTargetScope('192.168.1.0/24')} className="bg-surface-container text-on-surface-variant hover:text-primary hover:bg-surface-container-high px-1.5 py-0.5 rounded font-label-sm text-label-sm transition-colors cursor-pointer">
+                      192.168.1.0/24
+                    </button>
+                    <button type="button" onClick={() => setTargetScope('example.local')} className="bg-surface-container text-on-surface-variant hover:text-primary hover:bg-surface-container-high px-1.5 py-0.5 rounded font-label-sm text-label-sm transition-colors cursor-pointer">
+                      example.local
+                    </button>
+                  </div>
+                  <p className="font-body-sm text-body-sm text-outline">
+                    Operations outside the authorized scope will be blocked automatically.
+                  </p>
+                </div>
+
+                {/* AI OPERATION MODE SECTION */}
+                <div className="flex flex-col gap-1.5">
+                  <div className="flex items-center justify-between">
+                    <span className="font-label-sm text-label-sm uppercase tracking-wider text-outline font-medium flex items-center gap-1.5">
+                      <span className="material-symbols-outlined text-[14px] text-primary">psychology</span>
+                      AI Operation Mode
+                    </span>
+                    <span className="font-label-sm text-label-sm text-secondary font-medium uppercase">GEMINI PRO REASONER</span>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-space-xs">
+                    {/* Mode 1: Analysis */}
+                    <div 
+                      className={`cursor-pointer p-space-sm rounded transition-all flex flex-col justify-between ${operationMode === 'suggestion' ? 'bg-surface-container' : 'bg-surface-container-lowest opacity-80 hover:opacity-100'}`} 
+                      onClick={() => setOperationMode('suggestion')}
+                    >
+                      <div className="flex items-center justify-between mb-1">
+                        <span className={`font-label-md text-label-md font-semibold flex items-center gap-1 ${operationMode === 'suggestion' ? 'text-primary' : 'text-on-surface'}`}>
+                          <span className="material-symbols-outlined text-[16px]">{operationMode === 'suggestion' ? 'troubleshoot' : 'troubleshoot'}</span>
+                          ANALYSIS MODE
+                        </span>
+                        <span className={`material-symbols-outlined text-[16px] ${operationMode === 'suggestion' ? 'text-primary' : 'text-outline opacity-40'}`}>
+                          {operationMode === 'suggestion' ? 'check_circle' : 'radio_button_unchecked'}
+                        </span>
+                      </div>
+                      <p className="font-body-sm text-body-sm text-on-surface-variant leading-snug">
+                        The AI provides explanations, analysis and command suggestions.
+                      </p>
+                    </div>
+
+                    {/* Mode 2: Execution */}
+                    <div 
+                      className={`cursor-pointer p-space-sm rounded transition-all flex flex-col justify-between ${operationMode === 'autonomous' ? 'bg-surface-container' : 'bg-surface-container-lowest opacity-80 hover:opacity-100'}`}
+                      onClick={() => setOperationMode('autonomous')}
+                    >
+                      <div className="flex items-center justify-between mb-1">
+                        <span className={`font-label-md text-label-md font-semibold flex items-center gap-1 ${operationMode === 'autonomous' ? 'text-primary' : 'text-on-surface'}`}>
+                          <span className="material-symbols-outlined text-[16px]">terminal</span>
+                          EXECUTION MODE
+                        </span>
+                        <span className={`material-symbols-outlined text-[16px] ${operationMode === 'autonomous' ? 'text-primary' : 'text-outline opacity-40'}`}>
+                          {operationMode === 'autonomous' ? 'check_circle' : 'radio_button_unchecked'}
+                        </span>
+                      </div>
+                      <p className="font-body-sm text-body-sm text-outline leading-snug">
+                        The AI can propose executable commands subject to security controls.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* PRIMARY ACTION BUTTON */}
+                <div className="flex flex-col gap-1.5 pt-1">
+                  <button 
+                    id="initBtn" 
+                    type="submit" 
+                    disabled={isInitializing}
+                    className={`w-full font-label-md text-label-md uppercase tracking-wide py-2 px-space-md rounded flex items-center justify-center gap-2 shadow-md transition-all active:scale-[0.99] cursor-pointer ${isInitializing ? 'bg-primary text-on-primary opacity-90' : 'bg-primary-container hover:bg-primary-fixed text-on-primary'}`}
                   >
-                    ×
+                    {isInitializing ? (
+                      <>
+                        <span className="material-symbols-outlined text-[18px] animate-spin">refresh</span>
+                        <span>SPAWNING SUBPROCESS BRIDGE...</span>
+                      </>
+                    ) : (
+                      <>
+                        <span className="material-symbols-outlined text-[18px]">power_settings_new</span>
+                        <span>Initialize Secure Session</span>
+                      </>
+                    )}
                   </button>
-                </span>
-              ))
-            )}
-          </div>
-        </div>
-
-        {/* 3. Operation Mode Selector */}
-        <div className="mb-10">
-          <label className="block text-xs md:text-sm font-bold uppercase tracking-wider text-zinc-300 mb-3">
-            3. Modo de Operación de Política
-          </label>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            {/* Suggestion Mode */}
-            <div
-              onClick={() => setOperationMode('suggestion')}
-              className={`cursor-pointer rounded-2xl border p-5 transition-all duration-200 ${
-                operationMode === 'suggestion'
-                  ? 'border-emerald-500 bg-emerald-950/20 shadow-[0_0_20px_rgba(16,185,129,0.15)] ring-2 ring-emerald-500/50'
-                  : 'border-zinc-800 bg-zinc-950 hover:border-zinc-700'
-              }`}
-            >
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-base md:text-lg font-bold text-zinc-100">Modo Sugerencia</span>
-                <span className="rounded-full bg-emerald-500/20 px-3 py-1 text-xs font-bold text-emerald-400 border border-emerald-500/30">
-                  Recomendado
-                </span>
-              </div>
-              <p className="text-xs md:text-sm text-zinc-400 leading-relaxed">
-                La IA analiza y propone comandos en tarjetas de acción separadas. Los comandos con riesgo superior a <strong className="text-zinc-200 font-mono">BAJO</strong> requieren estrictamente la confirmación del operador antes de ejecutarse.
-              </p>
+                  <div className="flex items-center justify-center gap-1 text-center">
+                    <span className="material-symbols-outlined text-[13px] text-outline">lock</span>
+                    <span className="font-label-sm text-label-sm text-outline">
+                      Zero-Trust boundary required • Immutable cryptographic telemetry enabled
+                    </span>
+                  </div>
+                </div>
+              </form>
             </div>
 
-            {/* Autonomous Mode */}
-            <div
-              onClick={() => setOperationMode('autonomous')}
-              className={`cursor-pointer rounded-2xl border p-5 transition-all duration-200 ${
-                operationMode === 'autonomous'
-                  ? 'border-amber-500 bg-amber-950/20 shadow-[0_0_20px_rgba(245,158,11,0.15)] ring-2 ring-amber-500/50'
-                  : 'border-zinc-800 bg-zinc-950 hover:border-zinc-700'
-              }`}
-            >
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-base md:text-lg font-bold text-zinc-100">Modo Autónomo</span>
-                <span className="rounded-full bg-amber-500/20 px-3 py-1 text-xs font-bold text-amber-400 border border-amber-500/30">
-                  Avanzado
-                </span>
+            {/* Environmental Telemetry Footer Strip */}
+            <div className="w-full mt-space-sm bg-surface-container-lowest p-space-xs rounded flex flex-col sm:flex-row items-center justify-between gap-1 text-outline font-label-sm text-label-sm">
+              <div className="flex items-center gap-1.5 truncate">
+                <span className="text-primary font-semibold uppercase">KERNEL:</span>
+                <span className="truncate">Linux 5.15.153.1-microsoft-standard-WSL2 (x86_64)</span>
               </div>
-              <p className="text-xs md:text-sm text-zinc-400 leading-relaxed">
-                Los comandos de riesgo <strong className="text-zinc-200 font-mono">BAJO</strong> y <strong className="text-zinc-200 font-mono">MEDIO</strong> se autoejecutan en WSL2 como <code className="text-zinc-300 font-mono">ia-user</code>. Los comandos de riesgo <strong className="text-rose-400 font-mono">ALTO</strong> siempre requieren confirmación manual.
-              </p>
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-1">
+                  <span className="text-tertiary uppercase">DISTRO:</span>
+                  <span>Kali Rolling 2024.1</span>
+                </div>
+                <div className="flex items-center gap-1 bg-surface-container px-1.5 py-0.5 rounded text-primary">
+                  <span className="w-1.5 h-1.5 rounded-full bg-primary"></span>
+                  <span>Gemini: 42ms</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
-
-        {/* 4. Action Initialization Button */}
-        <div className="flex flex-col sm:flex-row items-center justify-between pt-6 border-t border-zinc-800 gap-4">
-          <div className="text-xs md:text-sm text-zinc-400">
-            {targets.length === 0 ? (
-              <span className="text-amber-400 font-medium animate-pulse">
-                ⚠️ Agrega al menos 1 objetivo para definir el alcance Zero-Trust
-              </span>
-            ) : (
-              <span>
-                Estado de Seguridad: <span className="text-emerald-400 font-bold">Motor de Políticas Listo y Armado</span>
-              </span>
-            )}
-          </div>
-          <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-            {localStorage.getItem('guardian-session-id') && (
-              <button
-                onClick={handleInitializeSession}
-                disabled={targets.length === 0}
-                className="w-full sm:w-auto rounded-xl bg-blue-600 hover:bg-blue-500 disabled:bg-zinc-800 disabled:text-zinc-500 disabled:cursor-not-allowed px-6 py-3.5 text-sm md:text-base font-black text-white shadow-xl shadow-blue-600/25 disabled:shadow-none transition-all active:scale-[0.98] cursor-pointer"
-              >
-                Reanudar Sesión Anterior →
-              </button>
-            )}
-            <button
-              onClick={handleStartNewSession}
-              disabled={targets.length === 0}
-              className="w-full sm:w-auto rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:bg-zinc-800 disabled:text-zinc-500 disabled:cursor-not-allowed px-8 py-3.5 text-sm md:text-base font-black text-white shadow-xl shadow-emerald-600/25 disabled:shadow-none transition-all hover:shadow-emerald-500/40 active:scale-[0.98] cursor-pointer"
-            >
-              Iniciar {localStorage.getItem('guardian-session-id') ? 'Nueva' : 'Sesión'} Segura →
-            </button>
-          </div>
-        </div>
-        </div>
-      </div>
+      </main>
     </div>
   );
 };
-
-export default SessionSetup;
