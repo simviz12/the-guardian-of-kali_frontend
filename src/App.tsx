@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { TerminalView } from './components/terminal/TerminalView';
 import { ChatPanel } from './components/chat/ChatPanel';
 import { SessionHistory } from './components/history/SessionHistory';
@@ -66,7 +66,10 @@ const AppContent: React.FC = () => {
             <GlobalErrorBanner error={backendError} onRetry={checkBackendHealth} compact />
           </div>
         )}
-        <SessionSetup onSessionInitialized={(config) => setActiveSession(config)} />
+        <SessionSetup 
+          onSessionInitialized={(config) => setActiveSession(config)} 
+          isBackendOnline={backendStatus === 'online'} 
+        />
       </div>
     );
   }

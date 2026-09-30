@@ -4,9 +4,10 @@ import { apiClient } from '../../services/apiClient';
 
 export interface SessionSetupProps {
   onSessionInitialized: (config: ActiveSessionConfig) => void;
+  isBackendOnline: boolean;
 }
 
-export const SessionSetup: React.FC<SessionSetupProps> = ({ onSessionInitialized }) => {
+export const SessionSetup: React.FC<SessionSetupProps> = ({ onSessionInitialized, isBackendOnline }) => {
   const [operatorId, setOperatorId] = useState('carlos');
   const [targetScope, setTargetScope] = useState('10.10.10.10');
   const [operationMode, setOperationMode] = useState<OperationMode>('suggestion');
@@ -16,6 +17,10 @@ export const SessionSetup: React.FC<SessionSetupProps> = ({ onSessionInitialized
   const [isSavingKey, setIsSavingKey] = useState(false);
 
   useEffect(() => {
+    if (!isBackendOnline) {
+      setHasApiKey(null); // Keep loading state while backend connects
+      return;
+    }
     apiClient.getApiKeyStatus().then(res => {
       if (res.success) {
         setHasApiKey(res.data.has_key);
@@ -23,7 +28,7 @@ export const SessionSetup: React.FC<SessionSetupProps> = ({ onSessionInitialized
         setHasApiKey(false);
       }
     });
-  }, []);
+  }, [isBackendOnline]);
 
   const saveApiKey = async (e: React.FormEvent) => {
     e.preventDefault();
