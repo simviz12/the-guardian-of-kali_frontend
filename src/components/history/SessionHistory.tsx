@@ -125,20 +125,20 @@ export const SessionHistory: React.FC = () => {
                   <td className="py-2 px-3 text-on-surface-variant">{new Date(cmd.timestamp).toLocaleTimeString()}</td>
                   <td className="py-2 px-3 text-on-surface">{cmd.operator}</td>
                   <td className="py-2 px-3">
-                    <span className={\`px-1.5 py-0.5 text-[10px] rounded \${cmd.origin === 'USER' ? 'bg-surface-container-highest text-on-surface' : 'bg-secondary-container text-on-secondary-container'}\`}>
+                    <span className={`px-1.5 py-0.5 text-[10px] rounded ${cmd.origin === 'USER' ? 'bg-surface-container-highest text-on-surface' : 'bg-secondary-container text-on-secondary-container'}`}>
                       {cmd.origin}
                     </span>
                   </td>
-                  <td className={\`py-2 px-3 font-semibold select-all \${cmd.status === 'BLOCKED' ? 'text-error line-through' : (cmd.origin === 'USER' ? 'text-primary' : 'text-tertiary')}\`}>
+                  <td className={`py-2 px-3 font-semibold select-all ${cmd.status === 'BLOCKED' ? 'text-error line-through' : (cmd.origin === 'USER' ? 'text-primary' : 'text-tertiary')}`}>
                     {cmd.text}
                   </td>
                   <td className="py-2 px-3 text-center">
-                    <span className={\`px-2 py-0.5 uppercase text-[10px] font-bold rounded \${cmd.risk_level === 'HIGH' || cmd.risk_level === 'BLOCKED' ? 'bg-error-container text-on-error-container' : 'bg-surface-container-high text-primary'}\`}>
+                    <span className={`px-2 py-0.5 uppercase text-[10px] font-bold rounded ${cmd.risk_level === 'HIGH' || cmd.risk_level === 'BLOCKED' ? 'bg-error-container text-on-error-container' : 'bg-surface-container-high text-primary'}`}>
                       {cmd.risk_level || 'LOW'}
                     </span>
                   </td>
                   <td className="py-2 px-3 text-right">
-                    <span className={\`px-2 py-0.5 uppercase text-[10px] font-bold inline-flex items-center gap-1 rounded \${cmd.status === 'BLOCKED' ? 'bg-error-container text-error' : 'bg-surface-container-high text-primary'}\`}>
+                    <span className={`px-2 py-0.5 uppercase text-[10px] font-bold inline-flex items-center gap-1 rounded ${cmd.status === 'BLOCKED' ? 'bg-error-container text-error' : 'bg-surface-container-high text-primary'}`}>
                       <span className="material-symbols-outlined text-[10px]">{cmd.status === 'BLOCKED' ? 'block' : 'check'}</span> 
                       {cmd.status || 'EXECUTED'}
                     </span>

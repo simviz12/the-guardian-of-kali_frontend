@@ -135,7 +135,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ activeSession }) => {
       {/* Chat Conversation Area */}
       <div className="flex-1 p-space-xl overflow-y-auto space-y-space-lg">
         {messages.map((msg) => (
-          <div key={msg.id} className={\`flex flex-col gap-space-sm \${msg.sender === 'user' ? 'items-end' : ''}\`}>
+          <div key={msg.id} className={`flex flex-col gap-space-sm ${msg.sender === 'user' ? 'items-end' : ''}`}>
             {msg.sender === 'ai' ? (
               <>
                 <div className="flex items-center gap-space-sm text-label-sm font-label-sm text-on-surface-variant">
