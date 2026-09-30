@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { TerminalView } from './components/terminal/TerminalView';
 import { ChatPanel } from './components/chat/ChatPanel';
 import { SessionHistory } from './components/history/SessionHistory';
-import { SettingsView } from './components/settings/SettingsView';
 import { SessionSetup } from './components/session/SessionSetup';
 import { SettingsView } from './components/settings/SettingsView';
 import { ErrorBoundary } from './components/common/ErrorBoundary';
