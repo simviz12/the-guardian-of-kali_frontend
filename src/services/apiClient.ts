@@ -30,6 +30,10 @@ export interface ApiError {
   details?: unknown;
 }
 
+export interface ApiKeyStatus {
+  has_key: boolean;
+}
+
 export interface ExecuteCommandPayload {
   command: string;
   target?: string | null;
@@ -396,6 +400,17 @@ export class BackendApiClient {
         authorized_targets: authorizedTargets ?? null,
         operation_mode: operationMode ?? null,
       }),
+    });
+  }
+
+  async getApiKeyStatus(): Promise<ApiResult<ApiKeyStatus>> {
+    return this.request<ApiKeyStatus>('/api/settings/api-key', { method: 'GET' });
+  }
+
+  async updateApiKey(api_key: string): Promise<ApiResult<{ ok: boolean }>> {
+    return this.request<{ ok: boolean }>('/api/settings/api-key', {
+      method: 'POST',
+      body: JSON.stringify({ api_key }),
     });
   }
 

@@ -2,7 +2,9 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { TerminalView } from './components/terminal/TerminalView';
 import { ChatPanel } from './components/chat/ChatPanel';
 import { SessionHistory } from './components/history/SessionHistory';
+import { SettingsView } from './components/settings/SettingsView';
 import { SessionSetup } from './components/session/SessionSetup';
+import { SettingsView } from './components/settings/SettingsView';
 import { ErrorBoundary } from './components/common/ErrorBoundary';
 import { GlobalErrorBanner } from './components/common/GlobalErrorBanner';
 import { ActiveSessionConfig } from './types/session';
@@ -24,7 +26,7 @@ const AppContent: React.FC = () => {
     return null;
   });
 
-  const [activeTab, setActiveTab] = useState<'terminal' | 'history'>('terminal');
+  const [activeTab, setActiveTab] = useState<'terminal' | 'history' | 'settings'>('terminal');
   const [backendStatus, setBackendStatus] = useState<'online' | 'offline' | 'checking'>('checking');
   const [backendError, setBackendError] = useState<AppErrorDetails | null>(null);
 
@@ -99,6 +101,9 @@ const AppContent: React.FC = () => {
             <button onClick={() => setActiveTab('history')} className={`h-full px-space-md flex items-center transition-colors font-label-md text-label-md ${activeTab === 'history' ? 'bg-surface-container-high text-primary border-b border-primary font-semibold' : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container'}`}>
               HISTORY
             </button>
+            <button onClick={() => setActiveTab('settings')} className={`h-full px-space-md flex items-center transition-colors font-label-md text-label-md ${activeTab === 'settings' ? 'bg-surface-container-high text-primary border-b border-primary font-semibold' : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container'}`}>
+              SETTINGS
+            </button>
           </nav>
           <div className="flex items-center">
             <button 
@@ -117,6 +122,9 @@ const AppContent: React.FC = () => {
         </button>
         <button onClick={() => setActiveTab('history')} className={`w-8 h-8 flex items-center justify-center rounded transition-colors ${activeTab === 'history' ? 'text-primary bg-surface-container' : 'text-on-surface-variant hover:bg-surface-container hover:text-primary'}`} title="System Audit Log">
           <span className="material-symbols-outlined text-[18px]">receipt_long</span>
+        </button>
+        <button onClick={() => setActiveTab('settings')} className={`w-8 h-8 flex items-center justify-center rounded transition-colors ${activeTab === 'settings' ? 'text-primary bg-surface-container' : 'text-on-surface-variant hover:bg-surface-container hover:text-primary'}`} title="System Settings">
+          <span className="material-symbols-outlined text-[18px]">settings</span>
         </button>
       </aside>
 
@@ -137,6 +145,11 @@ const AppContent: React.FC = () => {
           {activeTab === 'history' && (
             <div className="w-full overflow-y-auto">
               <SessionHistory />
+            </div>
+          )}
+          {activeTab === 'settings' && (
+            <div className="w-full overflow-y-auto">
+              <SettingsView />
             </div>
           )}
         </main>

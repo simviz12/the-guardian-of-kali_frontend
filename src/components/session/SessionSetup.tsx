@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ActiveSessionConfig, OperationMode } from '../../types/session';
+import { apiClient } from '../../services/apiClient';
 
 export interface SessionSetupProps {
   onSessionInitialized: (config: ActiveSessionConfig) => void;
@@ -10,6 +11,30 @@ export const SessionSetup: React.FC<SessionSetupProps> = ({ onSessionInitialized
   const [targetScope, setTargetScope] = useState('10.10.10.10');
   const [operationMode, setOperationMode] = useState<OperationMode>('suggestion');
   const [isInitializing, setIsInitializing] = useState(false);
+  const [hasApiKey, setHasApiKey] = useState<boolean | null>(null);
+  const [apiKeyInput, setApiKeyInput] = useState('');
+  const [isSavingKey, setIsSavingKey] = useState(false);
+
+  useEffect(() => {
+    apiClient.getApiKeyStatus().then(res => {
+      if (res.success) {
+        setHasApiKey(res.data.has_key);
+      } else {
+        setHasApiKey(false);
+      }
+    });
+  }, []);
+
+  const saveApiKey = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!apiKeyInput.trim()) return;
+    setIsSavingKey(true);
+    const res = await apiClient.updateApiKey(apiKeyInput.trim());
+    setIsSavingKey(false);
+    if (res.success) {
+      setHasApiKey(true);
+    }
+  };
 
   const simulateInit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,6 +48,55 @@ export const SessionSetup: React.FC<SessionSetupProps> = ({ onSessionInitialized
       });
     }, 1200);
   };
+
+  if (hasApiKey === null) {
+    return (
+      <div className="bg-surface-container-lowest text-on-surface flex items-center justify-center min-h-screen">
+        <span className="material-symbols-outlined animate-spin text-[32px] text-primary">progress_activity</span>
+      </div>
+    );
+  }
+
+  if (hasApiKey === false) {
+    return (
+      <div className="bg-surface-container-lowest text-on-surface font-body-sm text-body-sm flex items-center justify-center min-h-screen">
+        <main className="w-full max-w-md p-space-xl border border-outline-variant bg-surface-dim">
+          <div className="flex flex-col items-center text-center mb-space-lg">
+            <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+              <span className="material-symbols-outlined text-[24px] text-primary">key</span>
+            </div>
+            <h1 className="font-headline-lg text-headline-lg tracking-tight text-on-surface mb-0.5 uppercase font-semibold">
+              Requisito de Configuración
+            </h1>
+            <p className="font-body-md text-body-md text-on-surface-variant mt-2">
+              Para que The Guardian of Kaliche funcione, necesitas proveer una <strong>API Key de Google Gemini</strong>.
+            </p>
+          </div>
+          
+          <form onSubmit={saveApiKey} className="flex flex-col gap-space-md">
+            <div className="flex flex-col gap-1">
+              <label className="font-label-sm text-label-sm uppercase tracking-wider text-outline font-medium">Gemini API Key</label>
+              <input 
+                type="password"
+                required
+                value={apiKeyInput}
+                onChange={(e) => setApiKeyInput(e.target.value)}
+                placeholder="AIzaSy..."
+                className="w-full bg-surface-container border border-outline-variant rounded p-3 text-on-surface focus:outline-none focus:border-primary transition-colors"
+              />
+            </div>
+            <button 
+              type="submit" 
+              disabled={isSavingKey}
+              className="mt-2 w-full bg-primary hover:bg-surface-tint text-on-primary font-headline-sm text-headline-sm uppercase tracking-wider py-3 rounded flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
+            >
+              {isSavingKey ? 'Guardando...' : 'Guardar y Continuar'}
+            </button>
+          </form>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-surface-container-lowest text-on-surface font-body-sm text-body-sm flex items-center justify-center min-h-screen">
@@ -79,146 +153,124 @@ export const SessionSetup: React.FC<SessionSetupProps> = ({ onSessionInitialized
                     />
                     <span className="w-1.5 h-3.5 bg-primary animate-pulse ml-1 inline-block"></span>
                   </div>
-                  <p className="font-body-sm text-body-sm text-outline">
-                    Identify the operator responsible for this security session.
-                  </p>
                 </div>
 
-                {/* ZERO-TRUST BOUNDARY SECTION */}
-                <div className="flex flex-col gap-1">
+                {/* TARGET SCOPE SECTION */}
+                <div className="flex flex-col gap-1 mt-space-sm">
                   <div className="flex items-center justify-between">
                     <label className="font-label-sm text-label-sm uppercase tracking-wider text-outline font-medium flex items-center gap-1.5" htmlFor="target-scope">
-                      <span className="material-symbols-outlined text-[14px] text-primary">verified_user</span>
-                      Authorized Security Scope
+                      <span className="material-symbols-outlined text-[14px] text-error">my_location</span>
+                      Authorized Scope
                     </label>
-                    <span className="bg-surface-container text-primary font-label-sm text-label-sm px-1.5 py-0.5 rounded flex items-center gap-1 font-semibold uppercase">
-                      <span className="material-symbols-outlined text-[12px]">shield</span>
-                      Boundary Active
-                    </span>
+                    <span className="font-label-sm text-label-sm text-error">RESTRICTED</span>
                   </div>
-                  <div className="relative bg-surface-container rounded flex items-center px-space-sm py-1 focus-within:bg-surface-container-high transition-colors">
-                    <span className="material-symbols-outlined text-[16px] text-outline mr-2">target</span>
+                  <div className="relative bg-surface-container border border-error/20 rounded flex items-center px-space-sm py-1 focus-within:border-error/50 transition-colors">
+                    <span className="material-symbols-outlined text-[16px] text-error mr-2">dns</span>
                     <input 
                       id="target-scope" 
                       type="text" 
                       required 
                       value={targetScope}
                       onChange={(e) => setTargetScope(e.target.value)}
-                      placeholder="CIDR, IP, or Target Hostname" 
-                      className="w-full bg-transparent font-terminal-stream text-terminal-stream text-on-surface focus:outline-none placeholder-outline" 
+                      placeholder="IP or Domain (e.g., 10.10.10.10)" 
+                      className="w-full bg-transparent font-label-md text-label-md text-on-surface focus:outline-none placeholder-outline" 
                     />
                   </div>
-                  <div className="flex items-center gap-1.5 mt-0.5">
-                    <span className="font-label-sm text-label-sm text-outline">Presets:</span>
-                    <button type="button" onClick={() => setTargetScope('192.168.1.0/24')} className="bg-surface-container text-on-surface-variant hover:text-primary hover:bg-surface-container-high px-1.5 py-0.5 rounded font-label-sm text-label-sm transition-colors cursor-pointer">
-                      192.168.1.0/24
-                    </button>
-                    <button type="button" onClick={() => setTargetScope('example.local')} className="bg-surface-container text-on-surface-variant hover:text-primary hover:bg-surface-container-high px-1.5 py-0.5 rounded font-label-sm text-label-sm transition-colors cursor-pointer">
-                      example.local
-                    </button>
-                  </div>
-                  <p className="font-body-sm text-body-sm text-outline">
-                    Operations outside the authorized scope will be blocked automatically.
-                  </p>
                 </div>
 
-                {/* AI OPERATION MODE SECTION */}
-                <div className="flex flex-col gap-1.5">
-                  <div className="flex items-center justify-between">
-                    <span className="font-label-sm text-label-sm uppercase tracking-wider text-outline font-medium flex items-center gap-1.5">
-                      <span className="material-symbols-outlined text-[14px] text-primary">psychology</span>
-                      AI Operation Mode
-                    </span>
-                    <span className="font-label-sm text-label-sm text-secondary font-medium uppercase">GEMINI PRO REASONER</span>
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-space-xs">
-                    {/* Mode 1: Analysis */}
-                    <div 
-                      className={`cursor-pointer p-space-sm rounded transition-all flex flex-col justify-between ${operationMode === 'suggestion' ? 'bg-surface-container' : 'bg-surface-container-lowest opacity-80 hover:opacity-100'}`} 
-                      onClick={() => setOperationMode('suggestion')}
+                {/* ZERO-TRUST ENGAGEMENT POLICY SECTION */}
+                <div className="flex flex-col gap-1 mt-space-sm">
+                  <label className="font-label-sm text-label-sm uppercase tracking-wider text-outline font-medium flex items-center gap-1.5 mb-1">
+                    <span className="material-symbols-outlined text-[14px] text-tertiary">gavel</span>
+                    Zero-Trust Engagement Policy
+                  </label>
+                  
+                  <div className="grid grid-cols-2 gap-space-sm">
+                    {/* Policy Card: Assist */}
+                    <label 
+                      className={`relative flex flex-col p-space-sm rounded border cursor-pointer transition-all ${
+                        operationMode === 'suggestion' 
+                          ? 'border-tertiary bg-tertiary-container/10' 
+                          : 'border-outline-variant bg-surface-container hover:bg-surface-container-high'
+                      }`}
                     >
+                      <input 
+                        type="radio" 
+                        name="mode" 
+                        value="suggestion" 
+                        checked={operationMode === 'suggestion'}
+                        onChange={(e) => setOperationMode(e.target.value as OperationMode)}
+                        className="sr-only" 
+                      />
                       <div className="flex items-center justify-between mb-1">
-                        <span className={`font-label-md text-label-md font-semibold flex items-center gap-1 ${operationMode === 'suggestion' ? 'text-primary' : 'text-on-surface'}`}>
-                          <span className="material-symbols-outlined text-[16px]">{operationMode === 'suggestion' ? 'troubleshoot' : 'troubleshoot'}</span>
-                          ANALYSIS MODE
+                        <span className={`font-headline-sm text-headline-sm uppercase ${operationMode === 'suggestion' ? 'text-tertiary' : 'text-on-surface'}`}>
+                          Assist
                         </span>
-                        <span className={`material-symbols-outlined text-[16px] ${operationMode === 'suggestion' ? 'text-primary' : 'text-outline opacity-40'}`}>
-                          {operationMode === 'suggestion' ? 'check_circle' : 'radio_button_unchecked'}
+                        <span className={`material-symbols-outlined text-[16px] ${operationMode === 'suggestion' ? 'text-tertiary' : 'text-outline-variant'}`}>
+                          lightbulb
                         </span>
                       </div>
-                      <p className="font-body-sm text-body-sm text-on-surface-variant leading-snug">
-                        The AI provides explanations, analysis and command suggestions.
-                      </p>
-                    </div>
+                      <span className="font-body-sm text-[10px] leading-tight text-on-surface-variant">
+                        AI suggests commands. Operator explicitly approves execution.
+                      </span>
+                    </label>
 
-                    {/* Mode 2: Execution */}
-                    <div 
-                      className={`cursor-pointer p-space-sm rounded transition-all flex flex-col justify-between ${operationMode === 'autonomous' ? 'bg-surface-container' : 'bg-surface-container-lowest opacity-80 hover:opacity-100'}`}
-                      onClick={() => setOperationMode('autonomous')}
+                    {/* Policy Card: Autonomous */}
+                    <label 
+                      className={`relative flex flex-col p-space-sm rounded border cursor-pointer transition-all ${
+                        operationMode === 'autonomous' 
+                          ? 'border-error bg-error-container/10' 
+                          : 'border-outline-variant bg-surface-container hover:bg-surface-container-high'
+                      }`}
                     >
+                      <input 
+                        type="radio" 
+                        name="mode" 
+                        value="autonomous" 
+                        checked={operationMode === 'autonomous'}
+                        onChange={(e) => setOperationMode(e.target.value as OperationMode)}
+                        className="sr-only" 
+                      />
                       <div className="flex items-center justify-between mb-1">
-                        <span className={`font-label-md text-label-md font-semibold flex items-center gap-1 ${operationMode === 'autonomous' ? 'text-primary' : 'text-on-surface'}`}>
-                          <span className="material-symbols-outlined text-[16px]">terminal</span>
-                          EXECUTION MODE
+                        <span className={`font-headline-sm text-headline-sm uppercase ${operationMode === 'autonomous' ? 'text-error' : 'text-on-surface'}`}>
+                          Autonomy
                         </span>
-                        <span className={`material-symbols-outlined text-[16px] ${operationMode === 'autonomous' ? 'text-primary' : 'text-outline opacity-40'}`}>
-                          {operationMode === 'autonomous' ? 'check_circle' : 'radio_button_unchecked'}
+                        <span className={`material-symbols-outlined text-[16px] ${operationMode === 'autonomous' ? 'text-error' : 'text-outline-variant'}`}>
+                          smart_toy
                         </span>
                       </div>
-                      <p className="font-body-sm text-body-sm text-outline leading-snug">
-                        The AI can propose executable commands subject to security controls.
-                      </p>
-                    </div>
+                      <span className="font-body-sm text-[10px] leading-tight text-on-surface-variant">
+                        AI executes safe commands automatically. High-risk requires approval.
+                      </span>
+                    </label>
                   </div>
                 </div>
 
-                {/* PRIMARY ACTION BUTTON */}
-                <div className="flex flex-col gap-1.5 pt-1">
-                  <button 
-                    id="initBtn" 
-                    type="submit" 
-                    disabled={isInitializing}
-                    className={`w-full font-label-md text-label-md uppercase tracking-wide py-2 px-space-md rounded flex items-center justify-center gap-2 shadow-md transition-all active:scale-[0.99] cursor-pointer ${isInitializing ? 'bg-primary text-on-primary opacity-90' : 'bg-primary-container hover:bg-primary-fixed text-on-primary'}`}
-                  >
+                <button 
+                  type="submit" 
+                  disabled={isInitializing}
+                  className="mt-space-md w-full bg-primary hover:bg-surface-tint text-on-primary font-headline-sm text-headline-sm uppercase tracking-wider py-3 rounded flex items-center justify-center gap-2 transition-colors relative overflow-hidden group"
+                >
+                  <span className="relative z-10 flex items-center gap-2">
                     {isInitializing ? (
                       <>
-                        <span className="material-symbols-outlined text-[18px] animate-spin">refresh</span>
-                        <span>SPAWNING SUBPROCESS BRIDGE...</span>
+                        <span className="material-symbols-outlined animate-spin text-[18px]">progress_activity</span>
+                        Establishing Zero-Trust Link...
                       </>
                     ) : (
                       <>
-                        <span className="material-symbols-outlined text-[18px]">power_settings_new</span>
-                        <span>Initialize Secure Session</span>
+                        <span className="material-symbols-outlined text-[18px]">lock_open</span>
+                        Initialize Secure Session
                       </>
                     )}
-                  </button>
-                  <div className="flex items-center justify-center gap-1 text-center">
-                    <span className="material-symbols-outlined text-[13px] text-outline">lock</span>
-                    <span className="font-label-sm text-label-sm text-outline">
-                      Zero-Trust boundary required • Immutable cryptographic telemetry enabled
-                    </span>
-                  </div>
-                </div>
+                  </span>
+                  {!isInitializing && (
+                    <div className="absolute inset-0 h-full w-full bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-in-out"></div>
+                  )}
+                </button>
               </form>
             </div>
-
-            {/* Environmental Telemetry Footer Strip */}
-            <div className="w-full mt-space-sm bg-surface-container-lowest p-space-xs rounded flex flex-col sm:flex-row items-center justify-between gap-1 text-outline font-label-sm text-label-sm">
-              <div className="flex items-center gap-1.5 truncate">
-                <span className="text-primary font-semibold uppercase">KERNEL:</span>
-                <span className="truncate">Linux 5.15.153.1-microsoft-standard-WSL2 (x86_64)</span>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="flex items-center gap-1">
-                  <span className="text-tertiary uppercase">DISTRO:</span>
-                  <span>Kali Rolling 2024.1</span>
-                </div>
-                <div className="flex items-center gap-1 bg-surface-container px-1.5 py-0.5 rounded text-primary">
-                  <span className="w-1.5 h-1.5 rounded-full bg-primary"></span>
-                  <span>Gemini: 42ms</span>
-                </div>
-              </div>
-            </div>
+            
           </div>
         </div>
       </main>
