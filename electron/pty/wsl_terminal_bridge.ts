@@ -23,7 +23,7 @@ export class WslTerminalBridge {
 
   constructor(options: TerminalBridgeOptions = {}) {
     this.distro = options.distro || 'kali-linux';
-    this.user = options.user || 'carlos';
+    this.user = options.user || 'root';
     this.defaultCols = options.cols || 80;
     this.defaultRows = options.rows || 30;
   }
