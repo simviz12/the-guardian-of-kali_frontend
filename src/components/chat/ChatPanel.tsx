@@ -101,6 +101,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ activeSession }) => {
     if (!window.terminalAPI) return;
     setMessages((prev) => prev.map(m => m.id === msgId ? { ...m, executionStatus: 'executed' } : m));
     window.terminalAPI.sendInput(cmd.text + '\n');
+    apiClient.logManualCommand(cmd.text, activeSession?.sessionId || null).catch(() => {});
   };
 
   const rejectAction = (msgId: string) => {
