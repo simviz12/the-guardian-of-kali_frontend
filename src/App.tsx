@@ -139,7 +139,7 @@ const AppContent: React.FC = () => {
 
       <div className="pl-16 h-screen flex flex-col pt-[68px] pb-6">
         <main className="flex-1 w-full bg-surface-container-lowest overflow-hidden flex">
-          {activeTab === 'terminal' && (
+          <div className={activeTab === 'terminal' ? 'contents' : 'hidden'}>
             <div className="w-full max-w-[1720px] mx-auto p-space-xl flex flex-col gap-space-lg h-full overflow-hidden">
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-space-xl items-stretch h-full overflow-hidden">
                 <section className="lg:col-span-8 flex flex-col bg-surface-container-lowest rounded-xl shadow-xl overflow-hidden border border-outline-variant">
@@ -150,7 +150,7 @@ const AppContent: React.FC = () => {
                 </section>
               </div>
             </div>
-          )}
+          </div>
           {activeTab === 'history' && (
             <div className="w-full overflow-y-auto">
               <SessionHistory />
