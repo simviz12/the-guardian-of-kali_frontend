@@ -14,6 +14,30 @@ export const SessionHistory: React.FC = () => {
     fetchHistory();
   }, []);
 
+    const handleExportCSV = () => {
+    if (commands.length === 0) return;
+    
+    const headers = ['Hora', 'Operador', 'Origen', 'Comando', 'Riesgo', 'Estado'];
+    const rows = commands.map(cmd => [
+      new Date(cmd.timestamp).toISOString(),
+      'carlos',
+      cmd.origin,
+      `"${cmd.text.replace(/"/g, '""')}"`,
+      cmd.risk_level || 'LOW',
+      cmd.policy_decision === 'BLOCKED' ? 'BLOCKED' : 'EXECUTED'
+    ]);
+    
+    const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `guardian_audit_${new Date().getTime()}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const aiCommands = commands.filter(c => c.origin === 'AI').length;
   const blockedCommands = commands.filter(c => c.risk_level === 'BLOCKED' || c.policy_decision === 'BLOCKED').length;
 
@@ -45,7 +69,7 @@ export const SessionHistory: React.FC = () => {
               className="bg-surface-container-lowest text-on-surface pl-6 pr-2.5 py-1 font-label-sm text-label-sm outline-none placeholder:text-outline focus:bg-surface-container-high w-36 lg:w-48 transition-all rounded" 
             />
           </div>
-          <button className="px-2.5 py-1 bg-surface-container hover:bg-surface-container-high text-on-surface font-label-sm text-label-sm flex items-center gap-1 transition-colors rounded">
+          <button onClick={handleExportCSV} className="px-2.5 py-1 bg-surface-container hover:bg-surface-container-high text-on-surface font-label-sm text-label-sm flex items-center gap-1 transition-colors rounded">
             <span className="material-symbols-outlined text-[13px] text-primary">download</span>
             <span>Exportar CSV</span>
           </button>
