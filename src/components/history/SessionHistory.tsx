@@ -146,16 +146,16 @@ export const SessionHistory: React.FC<{ activeTab?: string }> = ({ activeTab }) 
               </tr>
             </thead>
             <tbody className="divide-y divide-surface-container-highest font-mono">
-              {commands.map((cmd, index) => (
+              {[...commands].reverse().map((cmd, index) => (
                 <tr key={index} className="bg-surface-container-low hover:bg-surface-container transition-colors">
                   <td className="py-2 px-3 text-on-surface-variant">{new Date(cmd.timestamp).toLocaleTimeString()}</td>
                   <td className="py-2 px-3 text-on-surface">carlos</td>
                   <td className="py-2 px-3">
-                    <span className={`px-1.5 py-0.5 text-[10px] rounded ${cmd.origin === 'USER' ? 'bg-surface-container-highest text-on-surface' : 'bg-secondary-container text-on-secondary-container'}`}>
+                    <span className={`px-1.5 py-0.5 text-[10px] rounded ${cmd.origin === 'MANUAL_USER' ? 'bg-surface-container-highest text-on-surface' : 'bg-secondary-container text-on-secondary-container'}`}>
                       {cmd.origin}
                     </span>
                   </td>
-                  <td className={`py-2 px-3 font-semibold select-all ${cmd.policy_decision === 'BLOCKED' ? 'text-error line-through' : (cmd.origin === 'USER' ? 'text-primary' : 'text-tertiary')}`}>
+                  <td className={`py-2 px-3 font-semibold select-all ${cmd.policy_decision === 'BLOCKED' ? 'text-error line-through' : (cmd.origin === 'MANUAL_USER' ? 'text-primary' : 'text-tertiary')}`}>
                     {cmd.text}
                   </td>
                   <td className="py-2 px-3 text-center">
