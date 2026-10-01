@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { apiClient, CommandHistoryItem } from '../../services/apiClient';
 
-export const SessionHistory: React.FC = () => {
+export const SessionHistory: React.FC<{ activeTab?: string }> = ({ activeTab }) => {
   const [commands, setCommands] = useState<CommandHistoryItem[]>([]);
   
   useEffect(() => {
@@ -11,8 +11,10 @@ export const SessionHistory: React.FC = () => {
         setCommands(result.data.commands);
       }
     };
-    fetchHistory();
-  }, []);
+    if (activeTab === 'history' || activeTab === undefined) {
+      fetchHistory();
+    }
+  }, [activeTab]);
 
     const handleExportCSV = () => {
     if (commands.length === 0) return;

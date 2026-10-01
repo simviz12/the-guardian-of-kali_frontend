@@ -153,7 +153,7 @@ const AppContent: React.FC = () => {
           </div>
           {activeTab === 'history' && (
             <div className="w-full overflow-y-auto">
-              <SessionHistory />
+              <SessionHistory activeTab={activeTab} />
             </div>
           )}
           {activeTab === 'settings' && (
