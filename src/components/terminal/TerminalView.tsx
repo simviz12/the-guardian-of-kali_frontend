@@ -3,6 +3,7 @@ import { Terminal } from '@xterm/xterm';
 import { FitAddon } from '@xterm/addon-fit';
 import '@xterm/xterm/css/xterm.css';
 import { AppErrorDetails } from '../../types/errors';
+import { apiClient } from '../../services/apiClient';
 
 export const TerminalView: React.FC = () => {
   const terminalContainerRef = useRef<HTMLDivElement | null>(null);
@@ -146,13 +147,15 @@ export const TerminalView: React.FC = () => {
       {/* Terminal Input Strip */}
       <div className="bg-surface-container-low p-space-lg flex flex-col gap-space-md shadow-inner border-t border-outline-variant">
         <form 
-          onSubmit={(e) => {
-            e.preventDefault();
-            if (cmdInput.trim() && window.terminalAPI) {
-              window.terminalAPI.sendInput(cmdInput + '\r');
-              setCmdInput('');
-            }
-          }} 
+                    onSubmit={(e) => {
+              e.preventDefault();
+              if (cmdInput.trim() && window.terminalAPI) {
+                const cmd = cmdInput;
+                window.terminalAPI.sendInput(cmd + String.fromCharCode(13));
+                setCmdInput('');
+                apiClient.logManualCommand(cmd, localStorage.getItem('guardian-session-id') || null).catch(() => {});
+              }
+            }} 
           className="flex items-center gap-space-md"
         >
           <div className="relative flex-1 flex items-center">

@@ -77,7 +77,7 @@ export const SessionHistory: React.FC = () => {
 
         <div className="bg-surface-container-low p-space-md flex flex-col justify-between relative overflow-hidden rounded-lg border border-outline-variant">
           <div className="flex items-center justify-between font-label-sm text-label-sm text-on-surface-variant">
-            <span className="uppercase tracking-wider text-error">INTERCEPCIONES BLOQUEADAS</span>
+            <span className="uppercase tracking-wider text-error">INTERCEPCIÓNES BLOQUEADAS</span>
             <span className="material-symbols-outlined text-[15px] text-error">gpp_bad</span>
           </div>
           <div className="flex items-baseline justify-between mt-space-md">
