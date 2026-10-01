@@ -1,56 +1,61 @@
-# 🛡️ The Guardian of Kaliche
+# The Guardian of Kaliche - Frontend
 
-> **Una aplicación única para cada operador:** *The Guardian of Kaliche* no es un entorno genérico. Está diseñado para que **al momento de instalarse se ajuste automáticamente a tus componentes locales**. La aplicación se apropia de tu propio subsistema de Kali Linux, gestiona tu propia clave API de Inteligencia Artificial (Gemini) en un entorno seguro y genera una base de datos local cifrada y exclusiva para tu auditoría. **Tu entorno, tus reglas.**
+Consola unificada de operaciones de seguridad (React/Vite + Electron). Se encarga de renderizar la terminal nativa de WSL2 (Kali Linux), visualizar el dashboard del historial, y proporcionar una interfaz de chat con el copiloto IA.
 
-**The Guardian of Kaliche** es un Copiloto de Seguridad Ofensiva y Defensiva estructurado bajo un estricto modelo de **Clean Architecture** e impulsado por Inteligencia Artificial (Gemini 2.5). Se integra bidireccionalmente y en tiempo real con tu entorno nativo de **Kali Linux WSL2**.
+## Arquitectura del Sistema (Clean Architecture UI)
 
-## 🚀 Instalación en 1 Solo Paso (Automática)
+El frontend sigue un enfoque modularizado inspirado en Clean Architecture, separando estrictamente la lógica de la Interfaz de Usuario (React) de los servicios externos (APIs) y de las capacidades nativas del Sistema Operativo (Electron).
 
-Para tener el sistema instalado "con todo y base de datos" en una carpeta nueva, simplemente abre la aplicación de **Windows PowerShell**, pega el siguiente bloque de código completo y presiona `Enter`. 
-
-Este script descargará el sistema, configurará los entornos, instalará las dependencias y arrancará la aplicación de escritorio nativa:
-
-```powershell
-# 1. Crear carpeta maestra e ingresar
-mkdir TheGuardianOfKaliche; cd TheGuardianOfKaliche
-
-# 2. Descargar Repositorios de Clean Architecture (Frontend y Backend)
-git clone https://github.com/simviz12/the-guardian-of-kali_backend.git
-git clone https://github.com/simviz12/the-guardian-of-kali_frontend.git
-
-# 3. Crear script de Auto-Ejecución (Iniciar_Guardian.bat)
-$BatContent = @"
-@echo off
-cd /d "%~dp0"
-taskkill /IM python.exe /F 2>nul
-cd the-guardian-of-kali_backend
-if not exist ".venv" ( python -m venv .venv )
-call .venv\Scripts\activate.bat
-pip install -r requirements.txt >nul 2>&1
-start /B python -m src.main >nul 2>&1
-cd ..\the-guardian-of-kali_frontend
-if not exist "node_modules" ( call npm install >nul 2>&1 )
-if not exist "dist" ( call npm run build >nul 2>&1 )
-start /B npm run start >nul 2>&1
-exit
-"@
-Set-Content -Path "Iniciar_Guardian.bat" -Value $BatContent
-
-# 4. Iniciar la aplicación
-.\Iniciar_Guardian.bat
+```text
+the-guardian-of-kali_frontend/
+├── src/                      # Código React (Renderer Process)
+│   ├── components/           # Módulos de la UI separados por dominio
+│   │   ├── chat/             # Panel de copiloto IA (ChatPanel, etc.)
+│   │   ├── history/          # Tabla de auditoría (SessionHistory)
+│   │   ├── session/          # Pantalla de inicio (SessionSetup)
+│   │   ├── terminal/         # Integración visual xterm.js (TerminalView)
+│   │   └── common/           # Componentes reusables (ErrorBanner)
+│   │
+│   ├── services/             # Adaptadores de red (Puentes externos)
+│   │   └── apiClient.ts      # Cliente HTTP fuertemente tipado para interactuar con FastAPI
+│   │
+│   ├── types/                # Entidades y Modelos del Frontend
+│   │   ├── errors.ts         # Manejo de errores unificado
+│   │   └── session.ts        # Interfaces principales (ActiveSessionConfig)
+│   │
+│   ├── App.tsx               # Orquestador principal (Rutas y Estado Global)
+│   └── main.tsx              # Punto de entrada de React
+│
+├── electron/                 # Código Nativo (Main Process Node.js)
+│   ├── pty/                  # Manejo de Pseudo-Terminales
+│   │   └── wsl_terminal_bridge.ts  # Adaptador específico que se comunica con WSL2
+│   ├── main.ts               # Ciclo de vida de la ventana Electron e IPC Main
+│   └── preload.ts            # Seguridad IPC (Exposición segura de APIs a React)
 ```
 
-> **NOTA:** Una vez ejecutado este bloque, el proyecto estará instalado. Para abrirlo todos los días en el futuro, **simplemente entra a la carpeta `TheGuardianOfKaliche` y haz doble clic en `Iniciar_Guardian.bat`**. ¡La aplicación se levantará sola en 3 segundos!
+### Flujo de Ejecución (IPC Bridge)
+Para mantener la seguridad en Electron, el código web (React) nunca toca directamente el sistema.
+1. **React (`TerminalView.tsx`)** renderiza la ventana negra usando `xterm.js`.
+2. Cuando escribes comandos (o usas la IA), React llama a `window.terminalAPI.sendInput()`.
+3. Esto viaja por el puente seguro `preload.ts` hasta el proceso central `main.ts`.
+4. El adaptador `wsl_terminal_bridge.ts` intercepta la llamada y la inyecta directamente al `node-pty` de `wsl.exe -u root`, procesándolo a nivel del sistema operativo.
+5. Simultáneamente, React utiliza `apiClient.ts` para notificarle asíncronamente al backend (FastAPI) y dejar el registro en SQLite.
 
-## 🏗️ Arquitectura del Sistema (Clean Architecture)
-*   **Idioma:** Interfaz visual (UI) 100% en español. Arquitectura, variables, repositorios y funciones 100% en inglés.
-*   **Backend (Python/FastAPI):**
-    *   `src/core/entities` (Entidades centrales).
-    *   `src/core/usecases` (Lógica Pura y Motor Zero-Trust).
-    *   `src/adapters` (WSL PTY, Base de datos SQLite, IA de Gemini).
-*   **Frontend (React/Electron):** Distribuido en `src/components`, `src/services` y `src/types` para total abstracción.
+## Instalación y Ejecución
 
-## ✨ Características Principales
-*   **Terminal Permanente Root:** Tu sesión de PTY arranca como `root` en Kali Linux. Tus comandos en curso no se borran al cambiar de pestañas en la interfaz.
-*   **Auditoría Integral:** Cada comando manual o asistido se guarda en `the_guardian_of_kali.db`.
-*   **Copiloto Integrado:** Un módulo Zero-Trust de IA que analiza todo lo que escupe tu consola para enseñarte cómo vulnerar o asegurar el objetivo.
+*Nota: Ejecuta el script `Iniciar_Guardian.bat` desde la carpeta principal del proyecto para iniciar tanto el frontend como el backend en un solo clic.*
+
+Para ejecutar el frontend manualmente (requiere el backend activo en el puerto 8765):
+```bash
+# 1. Instalar dependencias
+npm install
+
+# 2. Compilar React (Vite)
+npm run build:renderer
+
+# 3. Compilar Node/Electron (esbuild)
+npm run build:electron
+
+# 4. Iniciar aplicación
+npm run start
+```
