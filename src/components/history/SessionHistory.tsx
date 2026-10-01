@@ -148,7 +148,7 @@ export const SessionHistory: React.FC<{ activeTab?: string }> = ({ activeTab }) 
             <tbody className="divide-y divide-surface-container-highest font-mono">
               {[...commands].reverse().map((cmd, index) => (
                 <tr key={index} className="bg-surface-container-low hover:bg-surface-container transition-colors">
-                  <td className="py-2 px-3 text-on-surface-variant">{new Date(cmd.timestamp).toLocaleTimeString()}</td>
+                  <td className="py-2 px-3 text-on-surface-variant">{new Date(cmd.timestamp).toLocaleString()}</td>
                   <td className="py-2 px-3 text-on-surface">carlos</td>
                   <td className="py-2 px-3">
                     <span className={`px-1.5 py-0.5 text-[10px] rounded ${cmd.origin === 'MANUAL_USER' ? 'bg-surface-container-highest text-on-surface' : 'bg-secondary-container text-on-secondary-container'}`}>

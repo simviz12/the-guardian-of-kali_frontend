@@ -45,7 +45,7 @@ function createWindow(): void {
   // Initialize and attach the WSL terminal bridge for the operator user
   terminalBridge = new WslTerminalBridge({
     distro: 'kali-linux',
-    user: 'carlos',
+    user: 'root',
   });
   terminalBridge.attach(mainWindow);
 
