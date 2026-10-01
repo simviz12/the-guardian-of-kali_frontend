@@ -27,8 +27,8 @@ export const SessionHistory: React.FC = () => {
       cmd.policy_decision === 'BLOCKED' ? 'BLOCKED' : 'EXECUTED'
     ]);
     
-    const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\r\n');
+    const blob = new Blob(['\uFEFFsep=,\r\n', csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.setAttribute('href', url);
