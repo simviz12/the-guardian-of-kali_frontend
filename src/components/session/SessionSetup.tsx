@@ -119,7 +119,7 @@ export const SessionSetup: React.FC<SessionSetupProps> = ({ onSessionInitialized
               </p>
               <div className="flex items-center gap-space-xs flex-wrap justify-center">
                 <span className="bg-surface-container text-on-surface-variant font-label-sm text-label-sm px-1.5 py-0.5 rounded uppercase">
-                  AplicaciÃ³n de Escritorio
+                  Aplicación de Escritorio
                 </span>
                 <span className="bg-surface-container text-primary font-label-sm text-label-sm px-1.5 py-0.5 rounded uppercase flex items-center gap-1">
                   <span className="w-1.5 h-1.5 rounded-full bg-primary inline-block"></span>
@@ -285,7 +285,7 @@ export const SessionSetup: React.FC<SessionSetupProps> = ({ onSessionInitialized
                     ) : (
                       <>
                         <span className="material-symbols-outlined text-[18px]">lock_open</span>
-                        Iniciar SesiÃ³n Segura
+                        Iniciar Sesión Segura
                       </>
                     )}
                   </span>
