@@ -207,7 +207,7 @@ export const SessionSetup: React.FC<SessionSetupProps> = ({ onSessionInitialized
                 <div className="flex flex-col gap-1 mt-space-sm">
                   <label className="font-label-sm text-label-sm uppercase tracking-wider text-outline font-medium flex items-center gap-1.5 mb-1">
                     <span className="material-symbols-outlined text-[14px] text-tertiary">gavel</span>
-                    PolÃ­tica de IntervenciÃ³n Zero-Trust
+                    Política de Intervención Zero-Trust
                   </label>
                   
                   <div className="grid grid-cols-2 gap-space-sm">
@@ -236,7 +236,7 @@ export const SessionSetup: React.FC<SessionSetupProps> = ({ onSessionInitialized
                         </span>
                       </div>
                       <span className="font-body-sm text-[10px] leading-tight text-on-surface-variant">
-                        La IA sugiere comandos. El operador aprueba explÃ­citamente su ejecuciÃ³n.
+                        La IA sugiere comandos. El operador aprueba explícitamente su ejecución.
                       </span>
                     </label>
 
@@ -265,7 +265,7 @@ export const SessionSetup: React.FC<SessionSetupProps> = ({ onSessionInitialized
                         </span>
                       </div>
                       <span className="font-body-sm text-[10px] leading-tight text-on-surface-variant">
-                        La IA ejecuta comandos seguros automÃ¡ticamente. Alto riesgo requiere aprobaciÃ³n.
+                        La IA ejecuta comandos seguros automáticamente. Alto riesgo requiere aprobación.
                       </span>
                     </label>
                   </div>

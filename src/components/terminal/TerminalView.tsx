@@ -58,6 +58,9 @@ export const TerminalView: React.FC = () => {
       unsubscribeOutput = window.terminalAPI.onOutput((data: string) => {
         term.write(data);
       });
+      setTimeout(() => {
+        if (window.terminalAPI) window.terminalAPI.sendInput('\r');
+      }, 500);
     }
 
     const handleResize = () => {
