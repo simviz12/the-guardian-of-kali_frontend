@@ -68,7 +68,7 @@ const AppContent: React.FC = () => {
           </div>
         )}
         <SessionSetup 
-          onSessionInitialized={(config) => setActiveSession(config)} 
+          onSessionInitialized={(config) => { localStorage.setItem("guardian-session-id", config.sessionId); setActiveSession(config); }} 
           isBackendOnline={backendStatus === 'online'} 
         />
       </div>
