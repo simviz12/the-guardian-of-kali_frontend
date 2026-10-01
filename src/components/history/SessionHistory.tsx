@@ -13,6 +13,9 @@ export const SessionHistory: React.FC<{ activeTab?: string }> = ({ activeTab }) 
     };
     if (activeTab === 'history' || activeTab === undefined) {
       fetchHistory();
+      // Auto-refresh interval every 2 seconds while on history tab
+      const interval = setInterval(fetchHistory, 2000);
+      return () => clearInterval(interval);
     }
   }, [activeTab]);
 

@@ -126,7 +126,7 @@ const AppContent: React.FC = () => {
         <button onClick={() => setActiveTab('terminal')} className={`w-12 h-12 flex items-center justify-center rounded transition-colors ${activeTab === 'terminal' ? 'text-primary bg-surface-container' : 'text-on-surface-variant hover:bg-surface-container hover:text-primary'}`} title="Matriz de Terminal">
           <span className="material-symbols-outlined text-[24px]">terminal</span>
         </button>
-        <button onClick={() => setActiveTab('history')} className={`w-12 h-12 flex items-center justify-center rounded transition-colors ${activeTab === 'history' ? 'text-primary bg-surface-container' : 'text-on-surface-variant hover:bg-surface-container hover:text-primary'}`} title="Registro de AuditorÃƒÂ­a">
+        <button onClick={() => setActiveTab('history')} className={`w-12 h-12 flex items-center justify-center rounded transition-colors ${activeTab === 'history' ? 'text-primary bg-surface-container' : 'text-on-surface-variant hover:bg-surface-container hover:text-primary'}`} title="Registro de Auditoría">
           <span className="material-symbols-outlined text-[24px]">receipt_long</span>
         </button>
         <button onClick={() => setActiveTab('settings')} className={`w-12 h-12 flex items-center justify-center rounded transition-colors ${activeTab === 'settings' ? 'text-primary bg-surface-container' : 'text-on-surface-variant hover:bg-surface-container hover:text-primary'}`} title="Ajustes del Sistema">
@@ -171,8 +171,8 @@ const AppContent: React.FC = () => {
 
       <footer className="fixed bottom-0 left-0 right-0 h-6 bg-surface-dim border-t border-outline-variant z-50 px-margin flex items-center justify-between font-label-sm text-label-sm text-on-surface-variant">
         <div className="flex items-center gap-space-md">
-          <span>TÃšNEL: TUN0 (SEGURO)</span>
-          <span>ESTADO DE SESIÃ“N: PROTEGIDO</span>
+          <span>TÚNEL: TUN0 (SEGURO)</span>
+          <span>ESTADO DE SESIÓN: PROTEGIDO</span>
         </div>
         <div className="flex items-center gap-space-md">
           <span className="text-primary">WSL2 KERNEL: 5.15.150.1</span>
