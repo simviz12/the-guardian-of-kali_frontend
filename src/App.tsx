@@ -1,8 +1,10 @@
-﻿import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { TerminalView } from './components/terminal/TerminalView';
 import { ChatPanel } from './components/chat/ChatPanel';
 import { SessionHistory } from './components/history/SessionHistory';
 import { SessionSetup } from './components/session/SessionSetup';
+import { LoginScreen } from './components/auth/LoginScreen';
+import { AppProvider, useAppContext } from './contexts/AppContext';
 import { SettingsView } from './components/settings/SettingsView';
 import { GuideView } from './components/guide/GuideView';
 import { ErrorBoundary } from './components/common/ErrorBoundary';
@@ -13,6 +15,8 @@ import { AppErrorDetails } from './types/errors';
 import { parseAppError } from './services/apiClient';
 
 const AppContent: React.FC = () => {
+  const { t, theme, setTheme, language, setLanguage } = useAppContext();
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => !!localStorage.getItem('guardian-user-email'));
   const [activeSession, setActiveSession] = useState<ActiveSessionConfig | null>(() => {
     const saved = localStorage.getItem('guardian-session-id');
     if (saved) {
@@ -59,9 +63,31 @@ const AppContent: React.FC = () => {
     };
   }, [checkBackendHealth]);
 
+  if (!isAuthenticated) {
+    return <LoginScreen onLogin={() => setIsAuthenticated(true)} />;
+  }
+
   if (!activeSession) {
     return (
       <div className="flex flex-col min-h-screen bg-surface-container-lowest text-on-surface">
+        <div className="absolute top-4 right-4 flex gap-space-sm z-50">
+          <button 
+            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+            className="p-2 rounded bg-surface-container hover:bg-surface-container-high transition-colors text-on-surface"
+            title={t('settings.theme')}
+          >
+            <span className="material-symbols-outlined">
+              {theme === 'dark' ? 'light_mode' : 'dark_mode'}
+            </span>
+          </button>
+          <button 
+            onClick={() => setLanguage(language === 'es' ? 'en' : 'es')}
+            className="p-2 rounded bg-surface-container hover:bg-surface-container-high transition-colors font-label-md uppercase font-bold text-on-surface"
+            title={t('settings.language')}
+          >
+            {language}
+          </button>
+        </div>
         {backendStatus === 'offline' && backendError && (
           <div className="p-3 bg-surface-dim border-b border-outline-variant">
             <GlobalErrorBanner error={backendError} onRetry={checkBackendHealth} compact />
@@ -80,13 +106,31 @@ const AppContent: React.FC = () => {
       <header className="fixed top-0 left-0 right-0 z-50 flex flex-col bg-surface-container-lowest border-b border-outline-variant">
         <div className="h-8 px-margin flex items-center justify-between bg-surface-dim text-on-surface">
           <div className="flex items-center gap-space-sm">
-            <span className="font-label-sm text-label-sm uppercase font-semibold text-primary tracking-wider">THE GUARDIAN OF KALICHE</span>
-            <span className="font-label-sm text-label-sm px-space-xs py-0.5 bg-surface-container-low text-on-surface-variant border border-outline-variant rounded">NATIVO WSL2</span>
+            <span className="font-label-sm text-label-sm uppercase font-semibold text-primary tracking-wider">{t("app.title")}</span>
+            <span className="font-label-sm text-label-sm px-space-xs py-0.5 bg-surface-container-low text-on-surface-variant border border-outline-variant rounded">{t("app.native")}</span>
             <span className="font-label-sm text-label-sm px-space-xs py-0.5 bg-surface-container-low text-tertiary border border-outline-variant rounded">
-              ALCANCE: {activeSession.authorizedTargets[0]?.value || '10.10.10.10'}
+              {t("app.scope")}: {activeSession.authorizedTargets[0]?.value || '10.10.10.10'}
             </span>
           </div>
           <div className="flex items-center gap-space-md">
+            <div className="flex items-center gap-space-sm mr-4 border-r border-outline-variant pr-4">
+              <button 
+                onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-surface-container-high transition-colors"
+                title={t('settings.theme')}
+              >
+                <span className="material-symbols-outlined text-[18px]">
+                  {theme === 'dark' ? 'light_mode' : 'dark_mode'}
+                </span>
+              </button>
+              <button 
+                onClick={() => setLanguage(language === 'es' ? 'en' : 'es')}
+                className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-surface-container-high transition-colors font-label-md uppercase font-bold"
+                title={t('settings.language')}
+              >
+                {language}
+              </button>
+            </div>
             <div className="flex items-center gap-space-xs font-label-sm text-label-sm text-on-surface-variant">
               <span className={`w-1.5 h-1.5 rounded-full ${backendStatus === 'online' ? 'bg-primary-container animate-pulse' : 'bg-error'}`}></span>
               <span>API {backendStatus === 'online' ? 'OK' : 'ERROR'}</span>
@@ -113,7 +157,7 @@ const AppContent: React.FC = () => {
           </nav>
           <div className="flex items-center">
             <button 
-              onClick={() => { localStorage.removeItem('guardian-session-id'); setActiveSession(null); }}
+              onClick={() => { localStorage.removeItem('guardian-session-id'); localStorage.removeItem('guardian-user-email'); setActiveSession(null); setIsAuthenticated(false); }}
               className="px-space-md py-1 border border-error-container text-error hover:bg-error-container hover:text-on-error-container font-label-sm text-label-sm uppercase rounded transition-colors flex items-center gap-space-xs">
               <span className="material-symbols-outlined text-[14px]">power_settings_new</span>
               SALIR DE SESIÓN
@@ -171,8 +215,8 @@ const AppContent: React.FC = () => {
 
       <footer className="fixed bottom-0 left-0 right-0 h-6 bg-surface-dim border-t border-outline-variant z-50 px-margin flex items-center justify-between font-label-sm text-label-sm text-on-surface-variant">
         <div className="flex items-center gap-space-md">
-          <span>TÚNEL: TUN0 (SEGURO)</span>
-          <span>ESTADO DE SESIÓN: PROTEGIDO</span>
+          <span>{t("footer.tunnel")}</span>
+          <span>{t("footer.session")}</span>
         </div>
         <div className="flex items-center gap-space-md">
           <span className="text-primary">WSL2 KERNEL: 5.15.150.1</span>
@@ -183,9 +227,11 @@ const AppContent: React.FC = () => {
 };
 
 export const App: React.FC = () => (
-  <ErrorBoundary>
-    <AppContent />
-  </ErrorBoundary>
+  <AppProvider>
+    <ErrorBoundary>
+      <AppContent />
+    </ErrorBoundary>
+  </AppProvider>
 );
 
 export default App;
