@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { apiClient } from '../../services/apiClient';
+import { useAppContext } from '../../contexts/AppContext';
 
 export const SettingsView: React.FC = () => {
+  const { t } = useAppContext();
   const [apiKey, setApiKey] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState<{ text: string, type: 'success' | 'error' } | null>(null);
@@ -43,9 +45,9 @@ export const SettingsView: React.FC = () => {
             <span className="material-symbols-outlined text-[20px]">settings</span>
           </div>
           <div className="flex flex-col">
-            <h1 className="font-headline-md text-headline-md text-on-surface tracking-tight uppercase">AJUSTES DEL SISTEMA</h1>
+            <h1 className="font-headline-md text-headline-md text-on-surface tracking-tight uppercase">{t('settings.title')}</h1>
             <p className="font-body-sm text-body-sm text-on-surface-variant flex items-center gap-1">
-              Configura los parámetros del sistema e integraciones externas.
+              {t('settings.desc')}
             </p>
           </div>
         </div>
@@ -53,18 +55,18 @@ export const SettingsView: React.FC = () => {
 
       <div className="bg-surface-container-low p-space-lg rounded-lg border border-outline-variant flex-1">
         <h2 className="font-headline-sm text-headline-sm uppercase border-b border-outline-variant pb-2 mb-4 text-tertiary">
-          Configuración del Copiloto IA
+          {t('settings.ai_config')}
         </h2>
         
         <form onSubmit={handleSave} className="max-w-xl flex flex-col gap-4">
           <div className="flex flex-col gap-1">
-            <label className="font-label-sm text-label-sm uppercase tracking-wider text-outline font-medium">Clave de API de Google Gemini</label>
+            <label className="font-label-sm text-label-sm uppercase tracking-wider text-outline font-medium">{t('settings.api_key_label')}</label>
             <p className="text-body-sm text-on-surface-variant mb-2">
-              The Guardian of Kaliche utiliza Google Gemini 2.5 Flash para recopilación rápida de inteligencia y generación de comandos. 
+              {t('settings.api_key_desc')}
               {hasKey ? (
-                <span className="text-primary font-bold ml-2">"S API Key ya configurada.</span>
+                <span className="text-primary font-bold ml-2">{t('settings.api_key_configured')}</span>
               ) : (
-                <span className="text-error font-bold ml-2">~ API Key no encontrada.</span>
+                <span className="text-error font-bold ml-2">{t('settings.api_key_missing')}</span>
               )}
             </p>
             <input 
@@ -72,7 +74,7 @@ export const SettingsView: React.FC = () => {
               required={!hasKey}
               value={apiKey}
               onChange={(e) => setApiKey(e.target.value)}
-              placeholder="Reemplazar API Key actual..."
+              placeholder={t('settings.api_key_placeholder')}
               className="w-full bg-surface-container border border-outline-variant rounded p-3 text-on-surface focus:outline-none focus:border-primary transition-colors font-mono"
             />
           </div>
@@ -89,7 +91,7 @@ export const SettingsView: React.FC = () => {
             className="w-full sm:w-auto mt-2 bg-primary hover:bg-surface-tint text-on-primary font-headline-sm text-headline-sm uppercase tracking-wider py-2.5 px-6 rounded flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
           >
             <span className="material-symbols-outlined text-[18px]">save</span>
-            {isSaving ? 'Guardando...' : 'Actualizar API Key'}
+            {isSaving ? t('settings.saving_btn') : t('settings.save_btn')}
           </button>
         </form>
       </div>

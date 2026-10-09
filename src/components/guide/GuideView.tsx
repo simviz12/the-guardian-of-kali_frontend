@@ -1,6 +1,8 @@
 import React from 'react';
+import { useAppContext } from '../../contexts/AppContext';
 
 export const GuideView: React.FC = () => {
+  const { t } = useAppContext();
   return (
     <div className="p-space-lg flex flex-col gap-space-lg text-on-surface h-full">
       <div className="bg-surface-container-low p-space-md flex flex-col md:flex-row md:items-center justify-between gap-space-md rounded-lg border border-outline-variant">
@@ -9,9 +11,9 @@ export const GuideView: React.FC = () => {
             <span className="material-symbols-outlined text-[20px]">menu_book</span>
           </div>
           <div className="flex flex-col">
-            <h1 className="font-headline-md text-headline-md text-on-surface tracking-tight uppercase">GUÍA OPERATIVA ZERO-TRUST</h1>
+            <h1 className="font-headline-md text-headline-md text-on-surface tracking-tight uppercase">{t('guide.title')}</h1>
             <p className="font-body-sm text-body-sm text-on-surface-variant flex items-center gap-1">
-              Documentación técnica y reglas de operación (RoE) del Copiloto IA.
+              {t('guide.desc')}
             </p>
           </div>
         </div>
@@ -24,39 +26,37 @@ export const GuideView: React.FC = () => {
           
           <div className="bg-surface-container-low p-space-lg rounded-lg border border-outline-variant">
             <h2 className="font-headline-sm text-headline-sm uppercase border-b border-outline-variant pb-2 mb-4 text-tertiary">
-              Reglas de Operación (Rules of Engagement)
+              {t('guide.roe_title')}
             </h2>
             <div className="space-y-4 font-body-sm text-body-sm text-on-surface-variant leading-relaxed">
               <p>
-                <strong>The Guardian of Kaliche</strong> es un copiloto de seguridad ofensiva/defensiva 
-                diseñado bajo una estricta arquitectura <em>Zero-Trust</em>. Todos los comandos propuestos por 
-                la IA son evaluados por un motor de políticas de aislamiento antes de poder ejecutarse.
+                {t('guide.roe_text')}
               </p>
               <ul className="list-disc pl-5 space-y-2">
-                <li><strong className="text-on-surface">Restricción de Alcance (Scope):</strong> La IA solo propondrá y ejecutará comandos que apunten al alcance (Scope) autorizado al inicio de la sesión. </li>
-                <li><strong className="text-on-surface">Validación de Puertos:</strong> Si configuraste puertos permitidos, cualquier intento de escanear o atacar puertos fuera de la lista será bloqueado de inmediato.</li>
-                <li><strong className="text-error">Bloqueo de Destrucción:</strong> Comandos que pongan en riesgo la integridad del sistema (ej. <code className="bg-surface-container px-1 py-0.5 rounded">rm -rf /</code>, alteración de configuraciones locales) son rechazados.</li>
+                <li><strong className="text-on-surface">{t('guide.scope_title')}</strong> {t('guide.scope_desc')}</li>
+                <li><strong className="text-on-surface">{t('guide.ports_title')}</strong> {t('guide.ports_desc')}</li>
+                <li><strong className="text-error">{t('guide.destructive_title')}</strong> {t('guide.destructive_desc')}</li>
               </ul>
             </div>
           </div>
 
           <div className="bg-surface-container-low p-space-lg rounded-lg border border-outline-variant">
             <h2 className="font-headline-sm text-headline-sm uppercase border-b border-outline-variant pb-2 mb-4 text-primary">
-              Módulo de Reconocimiento y Escaneo (Ejemplos Seguros)
+              {t('guide.recon_title')}
             </h2>
             <div className="space-y-4 font-body-sm text-body-sm text-on-surface-variant">
-              <p>Puedes solicitar a la IA que estructure comandos de red complejos. Estos son algunos ejemplos de lo que puedes pedirle al copiloto en el chat:</p>
+              <p>{t('guide.recon_desc')}</p>
               
               <div className="bg-surface-container p-3 rounded font-mono text-xs">
-                <p className="text-tertiary mb-1"># Solicitar un escaneo pasivo o DNS:</p>
-                <p className="text-on-surface">"Realiza una transferencia de zona DNS al dominio objetivo"</p>
-                <p className="text-on-surface mt-2">"Usa theHarvester para recopilar correos del alcance autorizado"</p>
+                <p className="text-tertiary mb-1">{t('guide.dns_title')}</p>
+                <p className="text-on-surface">{t('guide.dns_ex1')}</p>
+                <p className="text-on-surface mt-2">{t('guide.dns_ex2')}</p>
               </div>
 
               <div className="bg-surface-container p-3 rounded font-mono text-xs">
-                <p className="text-tertiary mb-1"># Solicitar un escaneo activo de puertos (Nmap):</p>
-                <p className="text-on-surface">"Haz un escaneo rápido de los top 100 puertos"</p>
-                <p className="text-on-surface mt-2">"Ejecuta nmap con detección de versiones y SO en el objetivo"</p>
+                <p className="text-tertiary mb-1">{t('guide.nmap_title')}</p>
+                <p className="text-on-surface">{t('guide.nmap_ex1')}</p>
+                <p className="text-on-surface mt-2">{t('guide.nmap_ex2')}</p>
               </div>
             </div>
           </div>

@@ -143,16 +143,16 @@ const AppContent: React.FC = () => {
         <div className="h-9 px-margin flex items-center justify-between bg-surface-container-low border-t border-outline-variant">
           <nav className="flex items-center gap-space-xs h-full">
             <button onClick={() => setActiveTab('terminal')} className={`h-full px-space-md flex items-center transition-colors font-label-md text-label-md ${activeTab === 'terminal' ? 'bg-surface-container-high text-primary border-b border-primary font-semibold' : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container'}`}>
-              TERMINAL
+              {t('nav.terminal')}
             </button>
             <button onClick={() => setActiveTab('history')} className={`h-full px-space-md flex items-center transition-colors font-label-md text-label-md ${activeTab === 'history' ? 'bg-surface-container-high text-primary border-b border-primary font-semibold' : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container'}`}>
-              HISTORIAL
+              {t('nav.history')}
             </button>
             <button onClick={() => setActiveTab('settings')} className={`h-full px-space-md flex items-center transition-colors font-label-md text-label-md ${activeTab === 'settings' ? 'bg-surface-container-high text-primary border-b border-primary font-semibold' : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container'}`}>
-              AJUSTES
+              {t('nav.settings')}
             </button>
             <button onClick={() => setActiveTab('guide')} className={`h-full px-space-md flex items-center transition-colors font-label-md text-label-md ${activeTab === 'guide' ? 'bg-surface-container-high text-primary border-b border-primary font-semibold' : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container'}`}>
-              GUÍA
+              {t('nav.guide')}
             </button>
           </nav>
           <div className="flex items-center">
@@ -160,23 +160,23 @@ const AppContent: React.FC = () => {
               onClick={() => { localStorage.removeItem('guardian-session-id'); localStorage.removeItem('guardian-user-email'); setActiveSession(null); setIsAuthenticated(false); }}
               className="px-space-md py-1 border border-error-container text-error hover:bg-error-container hover:text-on-error-container font-label-sm text-label-sm uppercase rounded transition-colors flex items-center gap-space-xs">
               <span className="material-symbols-outlined text-[14px]">power_settings_new</span>
-              SALIR DE SESIÓN
+              {t('nav.logout')}
             </button>
           </div>
         </div>
       </header>
 
       <aside className="fixed left-0 top-[68px] bottom-6 w-16 bg-surface-dim border-r border-outline-variant z-40 flex flex-col items-center py-space-sm gap-space-sm">
-        <button onClick={() => setActiveTab('terminal')} className={`w-12 h-12 flex items-center justify-center rounded transition-colors ${activeTab === 'terminal' ? 'text-primary bg-surface-container' : 'text-on-surface-variant hover:bg-surface-container hover:text-primary'}`} title="Matriz de Terminal">
+        <button onClick={() => setActiveTab('terminal')} className={`w-12 h-12 flex items-center justify-center rounded transition-colors ${activeTab === 'terminal' ? 'text-primary bg-surface-container' : 'text-on-surface-variant hover:bg-surface-container hover:text-primary'}`} title={t('tooltip.terminal')}>
           <span className="material-symbols-outlined text-[24px]">terminal</span>
         </button>
-        <button onClick={() => setActiveTab('history')} className={`w-12 h-12 flex items-center justify-center rounded transition-colors ${activeTab === 'history' ? 'text-primary bg-surface-container' : 'text-on-surface-variant hover:bg-surface-container hover:text-primary'}`} title="Registro de Auditoría">
+        <button onClick={() => setActiveTab('history')} className={`w-12 h-12 flex items-center justify-center rounded transition-colors ${activeTab === 'history' ? 'text-primary bg-surface-container' : 'text-on-surface-variant hover:bg-surface-container hover:text-primary'}`} title={t('tooltip.history')}>
           <span className="material-symbols-outlined text-[24px]">receipt_long</span>
         </button>
-        <button onClick={() => setActiveTab('settings')} className={`w-12 h-12 flex items-center justify-center rounded transition-colors ${activeTab === 'settings' ? 'text-primary bg-surface-container' : 'text-on-surface-variant hover:bg-surface-container hover:text-primary'}`} title="Ajustes del Sistema">
+        <button onClick={() => setActiveTab('settings')} className={`w-12 h-12 flex items-center justify-center rounded transition-colors ${activeTab === 'settings' ? 'text-primary bg-surface-container' : 'text-on-surface-variant hover:bg-surface-container hover:text-primary'}`} title={t('tooltip.settings')}>
           <span className="material-symbols-outlined text-[24px]">settings</span>
         </button>
-        <button onClick={() => setActiveTab('guide')} className={`w-12 h-12 flex items-center justify-center rounded transition-colors ${activeTab === 'guide' ? 'text-primary bg-surface-container' : 'text-on-surface-variant hover:bg-surface-container hover:text-primary'}`} title="Guía Operativa">
+        <button onClick={() => setActiveTab('guide')} className={`w-12 h-12 flex items-center justify-center rounded transition-colors ${activeTab === 'guide' ? 'text-primary bg-surface-container' : 'text-on-surface-variant hover:bg-surface-container hover:text-primary'}`} title={t('tooltip.guide')}>
           <span className="material-symbols-outlined text-[24px]">menu_book</span>
         </button>
       </aside>

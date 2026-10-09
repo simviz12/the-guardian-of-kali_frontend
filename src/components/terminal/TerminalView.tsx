@@ -4,8 +4,10 @@ import { FitAddon } from '@xterm/addon-fit';
 import '@xterm/xterm/css/xterm.css';
 import { AppErrorDetails } from '../../types/errors';
 import { apiClient } from '../../services/apiClient';
+import { useAppContext } from '../../contexts/AppContext';
 
 export const TerminalView: React.FC = () => {
+  const { t } = useAppContext();
   const terminalContainerRef = useRef<HTMLDivElement | null>(null);
   const terminalInstanceRef = useRef<Terminal | null>(null);
   const fitAddonRef = useRef<FitAddon | null>(null);
@@ -167,7 +169,7 @@ export const TerminalView: React.FC = () => {
               type="text"
               value={cmdInput}
               onChange={(e) => setCmdInput(e.target.value)}
-              placeholder="Escribe tu comando aquí (ej. nmap -sV 10.10.10.10)..."
+              placeholder={t('terminal.placeholder')}
               className="w-full bg-surface-container font-terminal-stream text-on-surface placeholder:text-outline text-base rounded-lg pl-10 pr-4 py-3 focus:outline-none focus:bg-surface-container-high transition-colors"
               autoComplete="off"
               spellCheck={false}
@@ -179,13 +181,13 @@ export const TerminalView: React.FC = () => {
             className="bg-primary text-on-primary hover:bg-surface-tint font-headline-sm text-headline-sm font-semibold px-space-xl py-3 rounded-lg flex items-center gap-2 transition disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <span className="material-symbols-outlined text-[18px]">terminal</span>
-            EJECUTAR COMANDO
+            {t('terminal.execute')}
           </button>
         </form>
         <div className="flex items-center justify-between px-space-xs font-label-sm text-label-sm text-on-surface-variant">
           <span className="flex items-center gap-1.5">
             <span className="material-symbols-outlined text-[14px] text-outline">keyboard_return</span>
-            Presiona ↵ Enter para ejecutar directamente en la sesión WSL2
+            {t('terminal.hint')}
           </span>
         </div>
       </div>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ActiveSessionConfig, OperationMode } from '../../types/session';
 import { apiClient } from '../../services/apiClient';
+import { useAppContext } from '../../contexts/AppContext';
 
 export interface SessionSetupProps {
   onSessionInitialized: (config: ActiveSessionConfig) => void;
@@ -8,6 +9,7 @@ export interface SessionSetupProps {
 }
 
 export const SessionSetup: React.FC<SessionSetupProps> = ({ onSessionInitialized, isBackendOnline }) => {
+  const { t } = useAppContext();
   const [operatorId, setOperatorId] = useState('carlos');
   const [targetScope, setTargetScope] = useState('10.10.10.10');
   const [operationMode, setOperationMode] = useState<OperationMode>('suggestion');
@@ -141,7 +143,7 @@ export const SessionSetup: React.FC<SessionSetupProps> = ({ onSessionInitialized
                   <div className="flex items-center justify-between">
                     <label className="font-label-sm text-label-sm uppercase tracking-wider text-outline font-medium flex items-center gap-1.5" htmlFor="operator-id">
                       <span className="material-symbols-outlined text-[14px] text-primary">badge</span>
-                      Identidad del Operador
+                      {t('session.op.label')}
                     </label>
                     <span className="font-label-sm text-label-sm text-outline">SESSION ID: #0x9F41</span>
                   </div>
@@ -165,9 +167,9 @@ export const SessionSetup: React.FC<SessionSetupProps> = ({ onSessionInitialized
                   <div className="flex items-center justify-between">
                     <label className="font-label-sm text-label-sm uppercase tracking-wider text-outline font-medium flex items-center gap-1.5" htmlFor="target-scope">
                       <span className="material-symbols-outlined text-[14px] text-error">my_location</span>
-                      Alcance Autorizado (IP/Dominio)
+                      {t('session.scope.label')}
                     </label>
-                    <span className="font-label-sm text-label-sm text-error">RESTRINGIDO</span>
+                    <span className="font-label-sm text-label-sm text-error">{t('session.scope.restricted')}</span>
                   </div>
                   <div className="relative bg-surface-container border border-error/20 rounded flex items-center px-space-sm py-1 focus-within:border-error/50 transition-colors">
                     <span className="material-symbols-outlined text-[16px] text-error mr-2">dns</span>
@@ -188,16 +190,16 @@ export const SessionSetup: React.FC<SessionSetupProps> = ({ onSessionInitialized
                   <div className="flex items-center justify-between">
                     <label className="font-label-sm text-label-sm uppercase tracking-wider text-outline font-medium flex items-center gap-1.5" htmlFor="target-ports">
                       <span className="material-symbols-outlined text-[14px] text-tertiary">lan</span>
-                      Puertos Permitidos
+                      {t('session.ports.label')}
                     </label>
-                    <span className="font-label-sm text-label-sm text-tertiary">OPCIONAL</span>
+                    <span className="font-label-sm text-label-sm text-tertiary">{t('session.ports.optional')}</span>
                   </div>
                   <div className="relative bg-surface-container border border-outline-variant rounded flex items-center px-space-sm py-1 focus-within:border-tertiary/50 transition-colors">
                     <span className="material-symbols-outlined text-[16px] text-tertiary mr-2">settings_ethernet</span>
                     <input 
                       id="target-ports" 
                       type="text" 
-                      placeholder="Ej. 80, 443, 8080-8090 o dejar en blanco" 
+                      placeholder={t('session.ports.placeholder')} 
                       className="w-full bg-transparent font-label-md text-label-md text-on-surface focus:outline-none placeholder-outline" 
                     />
                   </div>
@@ -207,7 +209,7 @@ export const SessionSetup: React.FC<SessionSetupProps> = ({ onSessionInitialized
                 <div className="flex flex-col gap-1 mt-space-sm">
                   <label className="font-label-sm text-label-sm uppercase tracking-wider text-outline font-medium flex items-center gap-1.5 mb-1">
                     <span className="material-symbols-outlined text-[14px] text-tertiary">gavel</span>
-                    Política de Intervención Zero-Trust
+                    {t('session.mode.label')}
                   </label>
                   
                   <div className="grid grid-cols-2 gap-space-sm">
@@ -229,14 +231,14 @@ export const SessionSetup: React.FC<SessionSetupProps> = ({ onSessionInitialized
                       />
                       <div className="flex items-center justify-between mb-1">
                         <span className={`font-headline-sm text-headline-sm uppercase ${operationMode === 'suggestion' ? 'text-tertiary' : 'text-on-surface'}`}>
-                          Assist
+                          {t('session.mode.suggestion')}
                         </span>
                         <span className={`material-symbols-outlined text-[16px] ${operationMode === 'suggestion' ? 'text-tertiary' : 'text-outline-variant'}`}>
                           lightbulb
                         </span>
                       </div>
                       <span className="font-body-sm text-[10px] leading-tight text-on-surface-variant">
-                        La IA sugiere comandos. El operador aprueba explícitamente su ejecución.
+                        {t('session.mode.suggestion_desc')}
                       </span>
                     </label>
 
@@ -258,14 +260,14 @@ export const SessionSetup: React.FC<SessionSetupProps> = ({ onSessionInitialized
                       />
                       <div className="flex items-center justify-between mb-1">
                         <span className={`font-headline-sm text-headline-sm uppercase ${operationMode === 'autonomous' ? 'text-error' : 'text-on-surface'}`}>
-                          Autonomy
+                          {t('session.mode.autonomous')}
                         </span>
                         <span className={`material-symbols-outlined text-[16px] ${operationMode === 'autonomous' ? 'text-error' : 'text-outline-variant'}`}>
                           smart_toy
                         </span>
                       </div>
                       <span className="font-body-sm text-[10px] leading-tight text-on-surface-variant">
-                        La IA ejecuta comandos seguros automáticamente. Alto riesgo requiere aprobación.
+                        {t('session.mode.autonomous_desc')}
                       </span>
                     </label>
                   </div>
@@ -280,12 +282,12 @@ export const SessionSetup: React.FC<SessionSetupProps> = ({ onSessionInitialized
                     {isInitializing ? (
                       <>
                         <span className="material-symbols-outlined animate-spin text-[18px]">progress_activity</span>
-                        Estableciendo Enlace Zero-Trust...
+                        {t('session.btn.initializing')}
                       </>
                     ) : (
                       <>
                         <span className="material-symbols-outlined text-[18px]">lock_open</span>
-                        Iniciar Sesión Segura
+                        {t('session.btn.init')}
                       </>
                     )}
                   </span>
