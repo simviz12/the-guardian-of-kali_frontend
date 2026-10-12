@@ -82,10 +82,12 @@ const AppContent: React.FC = () => {
           </button>
           <button 
             onClick={() => setLanguage(language === 'es' ? 'en' : 'es')}
-            className="p-2 rounded bg-surface-container hover:bg-surface-container-high transition-colors font-label-md uppercase font-bold text-on-surface"
+            className="px-2.5 py-1.5 rounded bg-surface-container hover:bg-surface-container-high transition-colors font-label-md text-xs font-bold text-on-surface flex items-center gap-1 border border-outline-variant"
             title={t('settings.language')}
           >
-            {language}
+            <span className={language === 'es' ? 'text-primary font-black' : 'text-on-surface-variant'}>ES</span>
+            <span className="text-outline-variant text-[10px]">|</span>
+            <span className={language === 'en' ? 'text-primary font-black' : 'text-on-surface-variant'}>EN</span>
           </button>
         </div>
         {backendStatus === 'offline' && backendError && (
@@ -116,7 +118,7 @@ const AppContent: React.FC = () => {
             <div className="flex items-center gap-space-sm mr-4 border-r border-outline-variant pr-4">
               <button 
                 onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-                className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-surface-container-high transition-colors"
+                className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-surface-container-high transition-colors text-on-surface"
                 title={t('settings.theme')}
               >
                 <span className="material-symbols-outlined text-[18px]">
@@ -125,10 +127,12 @@ const AppContent: React.FC = () => {
               </button>
               <button 
                 onClick={() => setLanguage(language === 'es' ? 'en' : 'es')}
-                className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-surface-container-high transition-colors font-label-md uppercase font-bold"
+                className="px-2 py-0.5 rounded bg-surface-container hover:bg-surface-container-high transition-colors font-label-md text-xs font-bold flex items-center gap-1 border border-outline-variant"
                 title={t('settings.language')}
               >
-                {language}
+                <span className={language === 'es' ? 'text-primary font-black' : 'text-on-surface-variant'}>ES</span>
+                <span className="text-outline-variant text-[10px]">|</span>
+                <span className={language === 'en' ? 'text-primary font-black' : 'text-on-surface-variant'}>EN</span>
               </button>
             </div>
             <div className="flex items-center gap-space-xs font-label-sm text-label-sm text-on-surface-variant">

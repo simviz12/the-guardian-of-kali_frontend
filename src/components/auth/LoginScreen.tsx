@@ -37,10 +37,12 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
         </button>
         <button 
           onClick={() => setLanguage(language === 'es' ? 'en' : 'es')}
-          className="p-2 rounded bg-surface-container hover:bg-surface-container-high transition-colors font-label-md uppercase font-bold text-on-surface"
+          className="px-2.5 py-1.5 rounded bg-surface-container hover:bg-surface-container-high transition-colors font-label-md text-xs font-bold text-on-surface flex items-center gap-1 border border-outline-variant"
           title={t('settings.language')}
         >
-          {language}
+          <span className={language === 'es' ? 'text-primary font-black' : 'text-on-surface-variant'}>ES</span>
+          <span className="text-outline-variant text-[10px]">|</span>
+          <span className={language === 'en' ? 'text-primary font-black' : 'text-on-surface-variant'}>EN</span>
         </button>
       </div>
 
