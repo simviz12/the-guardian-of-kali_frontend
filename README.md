@@ -43,19 +43,23 @@ Para mantener la seguridad en Electron, el código web (React) nunca toca direct
 
 ## Instalación y Ejecución
 
-*Nota: Ejecuta el script `Iniciar_Guardian.bat` desde la carpeta principal del proyecto para iniciar tanto el frontend como el backend en un solo clic.*
+* **Instalación inicial:** Ejecuta el archivo `Instalar_Guardian.bat` en la raíz para instalar dependencias de Python y Node, y generar el build de producción.
+* **Uso diario:** Ejecuta `Iniciar_Guardian.bat` para iniciar el backend y la aplicación en 2 segundos.
 
-Para ejecutar el frontend manualmente (requiere el backend activo en el puerto 8765):
+Para ejecutar el frontend manualmente en desarrollo:
 ```bash
 # 1. Instalar dependencias
 npm install
 
-# 2. Compilar React (Vite)
-npm run build:renderer
+# 2. Compilar producción
+npm run build
 
-# 3. Compilar Node/Electron (esbuild)
-npm run build:electron
-
-# 4. Iniciar aplicación
+# 3. Iniciar aplicación
 npm run start
 ```
+
+## Características de la Interfaz
+* **Autenticación:** Pantalla de acceso restringido con validación de correo de operador.
+* **Temas Visuales:** Selector interactivo de Modo Oscuro (Dark) y Modo Claro (Light) persistente.
+* **Internacionalización:** Selector dual `ES | EN` con traducción dinámica integral de componentes, botones y mensajes.
+
