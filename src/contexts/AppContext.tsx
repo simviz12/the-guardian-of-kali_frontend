@@ -34,12 +34,26 @@ const translations: Record<Language, Record<string, string>> = {
     'tooltip.settings': 'Ajustes del Sistema',
     'tooltip.guide': 'Guía Operativa',
 
-    // Login
+    // Login & Register
     'login.title': 'Acceso Restringido',
     'login.subtitle': 'Por favor, ingrese sus credenciales para continuar.',
     'login.email': 'Correo Electrónico',
+    'login.password': 'Contraseña',
+    'login.confirm_password': 'Confirmar Contraseña',
     'login.button': 'Entrar al Sistema',
-    'login.error': 'Por favor ingrese un correo válido',
+    'login.register_button': 'Registrar Operador',
+    'login.tab_login': 'Iniciar Sesión',
+    'login.tab_register': 'Crear Cuenta',
+    'login.no_account': '¿No tienes una cuenta?',
+    'login.has_account': '¿Ya tienes una cuenta registrada?',
+    'login.switch_to_register': 'Crear cuenta nueva',
+    'login.switch_to_login': 'Iniciar sesión existente',
+    'login.error_email': 'Por favor ingrese un correo válido',
+    'login.error_password': 'La contraseña debe tener al menos 6 caracteres',
+    'login.error_password_match': 'Las contraseñas no coinciden',
+    'login.error_auth': 'Credenciales incorrectas o usuario no registrado',
+    'login.error_exists': 'Ya existe una cuenta con este correo',
+    'login.success_register': '¡Cuenta creada con éxito! Iniciando sesión...',
 
     // Session Setup
     'session.setup': 'NUEVA SESIÓN DE OPERACIONES',
@@ -173,12 +187,26 @@ const translations: Record<Language, Record<string, string>> = {
     'tooltip.settings': 'System Settings',
     'tooltip.guide': 'Operational Guide',
 
-    // Login
+    // Login & Register
     'login.title': 'Restricted Access',
     'login.subtitle': 'Please enter your credentials to continue.',
     'login.email': 'Email Address',
+    'login.password': 'Password',
+    'login.confirm_password': 'Confirm Password',
     'login.button': 'Enter System',
-    'login.error': 'Please enter a valid email',
+    'login.register_button': 'Register Operator',
+    'login.tab_login': 'Sign In',
+    'login.tab_register': 'Create Account',
+    'login.no_account': "Don't have an account?",
+    'login.has_account': 'Already registered?',
+    'login.switch_to_register': 'Create new account',
+    'login.switch_to_login': 'Sign in existing account',
+    'login.error_email': 'Please enter a valid email',
+    'login.error_password': 'Password must be at least 6 characters',
+    'login.error_password_match': 'Passwords do not match',
+    'login.error_auth': 'Invalid credentials or operator not registered',
+    'login.error_exists': 'An account already exists with this email',
+    'login.success_register': 'Account created successfully! Logging in...',
 
     // Session Setup
     'session.setup': 'NEW OPERATIONS SESSION',

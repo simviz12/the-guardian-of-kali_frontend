@@ -1,65 +1,71 @@
 # The Guardian of Kaliche - Frontend
+> Consola unificada de operaciones de seguridad (React 18 + Vite + TailwindCSS + Electron).
 
-Consola unificada de operaciones de seguridad (React/Vite + Electron). Se encarga de renderizar la terminal nativa de WSL2 (Kali Linux), visualizar el dashboard del historial, y proporcionar una interfaz de chat con el copiloto IA.
+---
 
-## Arquitectura del Sistema (Clean Architecture UI)
+## ⚡ EJECUCIÓN RÁPIDA MEDIANTE SCRIPTS (.BAT)
 
-El frontend sigue un enfoque modularizado inspirado en Clean Architecture, separando estrictamente la lógica de la Interfaz de Usuario (React) de los servicios externos (APIs) y de las capacidades nativas del Sistema Operativo (Electron).
+En la carpeta raíz del proyecto dispones de scripts batch diseñados para la gestión del sistema:
+
+* 🛠️ **`Instalar_Guardian.bat`**: Ejecútalo la primera vez. Instala paquetes, compila el bundle y prepara el entorno.
+* 🚀 **`Iniciar_Guardian.bat`**: Ejecútalo para abrir la aplicación diariamente en 2 segundos sin esperas ni recompilaciones.
+
+---
+
+## 🏗️ ARQUITECTURA DEL SISTEMA (CLEAN ARCHITECTURE UI)
+
+El frontend sigue un enfoque modularizado inspirado en Clean Architecture, separando estrictamente la lógica de la Interfaz de Usuario (React) de los servicios externos (APIs) y de las capacidades nativas del Sistema Operativo (Electron):
 
 ```text
 the-guardian-of-kali_frontend/
 ├── src/                      # Código React (Renderer Process)
 │   ├── components/           # Módulos de la UI separados por dominio
-│   │   ├── chat/             # Panel de copiloto IA (ChatPanel, etc.)
+│   │   ├── auth/             # Pantalla de Autenticación y Registro (LoginScreen)
+│   │   ├── chat/             # Panel de copiloto IA (ChatPanel)
 │   │   ├── history/          # Tabla de auditoría (SessionHistory)
-│   │   ├── session/          # Pantalla de inicio (SessionSetup)
+│   │   ├── session/          # Pantalla de inicio de sesión Zero-Trust (SessionSetup)
 │   │   ├── terminal/         # Integración visual xterm.js (TerminalView)
-│   │   └── common/           # Componentes reusables (ErrorBanner)
+│   │   ├── settings/         # Configuración de API Keys (SettingsView)
+│   │   ├── guide/            # Guía interactiva RoE (GuideView)
+│   │   └── common/           # Componentes reusables (ErrorBanner, ErrorBoundary)
 │   │
-│   ├── services/             # Adaptadores de red (Puentes externos)
-│   │   └── apiClient.ts      # Cliente HTTP fuertemente tipado para interactuar con FastAPI
-│   │
-│   ├── types/                # Entidades y Modelos del Frontend
-│   │   ├── errors.ts         # Manejo de errores unificado
-│   │   └── session.ts        # Interfaces principales (ActiveSessionConfig)
-│   │
-│   ├── App.tsx               # Orquestador principal (Rutas y Estado Global)
+│   ├── contexts/             # Estado Global (AppContext: Tema Dark/Light e Idioma ES/EN)
+│   ├── services/             # Adaptadores de red (apiClient.ts para FastAPI)
+│   ├── types/                # Entidades y Modelos del Frontend (session.ts, errors.ts)
+│   ├── App.tsx               # Orquestador principal (Rutas y Control de Acceso)
 │   └── main.tsx              # Punto de entrada de React
 │
 ├── electron/                 # Código Nativo (Main Process Node.js)
-│   ├── pty/                  # Manejo de Pseudo-Terminales
-│   │   └── wsl_terminal_bridge.ts  # Adaptador específico que se comunica con WSL2
+│   ├── pty/                  # Manejo de Pseudo-Terminales WSL2 (wsl_terminal_bridge.ts)
 │   ├── main.ts               # Ciclo de vida de la ventana Electron e IPC Main
 │   └── preload.ts            # Seguridad IPC (Exposición segura de APIs a React)
 ```
 
-### Flujo de Ejecución (IPC Bridge)
-Para mantener la seguridad en Electron, el código web (React) nunca toca directamente el sistema.
-1. **React (`TerminalView.tsx`)** renderiza la ventana negra usando `xterm.js`.
-2. Cuando escribes comandos (o usas la IA), React llama a `window.terminalAPI.sendInput()`.
-3. Esto viaja por el puente seguro `preload.ts` hasta el proceso central `main.ts`.
-4. El adaptador `wsl_terminal_bridge.ts` intercepta la llamada y la inyecta directamente al `node-pty` de `wsl.exe -u root`, procesándolo a nivel del sistema operativo.
-5. Simultáneamente, React utiliza `apiClient.ts` para notificarle asíncronamente al backend (FastAPI) y dejar el registro en SQLite.
+---
 
-## Instalación y Ejecución
+## 🎨 CARACTERÍSTICAS DE LA INTERFAZ
 
-* **Instalación inicial:** Ejecuta el archivo `Instalar_Guardian.bat` en la raíz para instalar dependencias de Python y Node, y generar el build de producción.
-* **Uso diario:** Ejecuta `Iniciar_Guardian.bat` para iniciar el backend y la aplicación en 2 segundos.
+1. **🔐 Autenticación Completa de Operador:**
+   - Inicio de sesión con **Correo Electrónico** y **Contraseña**.
+   - Pestaña para **Crear Cuenta (Registro)** con confirmación de clave y almacenamiento seguro local.
+2. **🌓 Modos Visuales (Dark & Light):**
+   - Conmutador en tiempo real con icono de sol/luna en la barra superior.
+3. **🌐 Internacionalización Integral (`ES | EN`):**
+   - Selector tipo cápsula con soporte completo de traducción para toda la aplicación.
+4. **💻 Puente Terminal PTY:**
+   - Acceso nativo e interactivo como `root` a Kali Linux en WSL2.
 
-Para ejecutar el frontend manualmente en desarrollo:
+---
+
+## 🛠️ EJECUCIÓN MANUAL (MODO DESARROLLO)
+
 ```bash
 # 1. Instalar dependencias
 npm install
 
-# 2. Compilar producción
+# 2. Compilar aplicación para producción
 npm run build
 
-# 3. Iniciar aplicación
+# 3. Iniciar ventana Electron
 npm run start
 ```
-
-## Características de la Interfaz
-* **Autenticación:** Pantalla de acceso restringido con validación de correo de operador.
-* **Temas Visuales:** Selector interactivo de Modo Oscuro (Dark) y Modo Claro (Light) persistente.
-* **Internacionalización:** Selector dual `ES | EN` con traducción dinámica integral de componentes, botones y mensajes.
-
