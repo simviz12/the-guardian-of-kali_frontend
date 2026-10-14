@@ -3,12 +3,21 @@
 
 ---
 
-## ⚡ EJECUCIÓN RÁPIDA MEDIANTE SCRIPTS (.BAT)
+## ⚡ DESCARGA E INSTALACIÓN EN 1 CLIC (.BAT)
 
-En la carpeta raíz del proyecto dispones de scripts batch diseñados para la gestión del sistema:
+Puedes descargar directamente el instalador automatizado con este enlace directo:
 
-* 🛠️ **`Instalar_Guardian.bat`**: Ejecútalo la primera vez. Instala paquetes, compila el bundle y prepara el entorno.
-* 🚀 **`Iniciar_Guardian.bat`**: Ejecútalo para abrir la aplicación diariamente en 2 segundos sin esperas ni recompilaciones.
+👉 **[Descargar Instalar_Guardian.bat](https://raw.githubusercontent.com/simviz12/the-guardian-of-kali_frontend/main/Instalar_Guardian.bat)**
+
+### ¿Cómo se usa?
+1. Haz clic derecho en el enlace de arriba y selecciona **"Guardar enlace como..."** (o ábrelo y presiona `Ctrl + S`).
+2. Guárdalo con el nombre **`Instalar_Guardian.bat`** en cualquier carpeta donde quieras instalar el proyecto.
+3. Haz **doble clic** sobre `Instalar_Guardian.bat`. El script se encargará automáticamente de:
+   - Descargar el Backend y el Frontend desde GitHub.
+   - Configurar el entorno virtual de Python (`.venv`) e instalar librerías.
+   - Instalar dependencias de Node.js y compilar la aplicación.
+   - Generar el archivo **`Iniciar_Guardian.bat`** para abrir la app en 2 segundos.
+
 
 ---
 
