@@ -4,6 +4,7 @@
  */
 import { app, BrowserWindow } from 'electron';
 import * as path from 'path';
+import * as fs from 'fs';
 // In CJS, __dirname and __filename are natively available.
 import { WslTerminalBridge } from './pty/wsl_terminal_bridge.js';
 import { spawn, ChildProcess } from 'child_process';
@@ -11,14 +12,41 @@ import { spawn, ChildProcess } from 'child_process';
 let terminalBridge: WslTerminalBridge | null = null;
 let backendProcess: ChildProcess | null = null;
 
+function resolveBackendDir(): string {
+  // Allow the launcher (setup_and_run.bat) to pin the backend location.
+  if (process.env.GUARDIAN_BACKEND_DIR) {
+    return path.resolve(process.env.GUARDIAN_BACKEND_DIR);
+  }
+  // Otherwise probe the common sibling layouts relative to the frontend repo.
+  const candidates = [
+    path.resolve(__dirname, '../../the-guardian-of-kali_backend'),
+    path.resolve(__dirname, '../../backend'),
+  ];
+  for (const dir of candidates) {
+    if (fs.existsSync(path.join(dir, '.venv', 'Scripts', 'python.exe'))) return dir;
+  }
+  return candidates[0];
+}
+
 function startBackend() {
-  // __dirname is dist-electron, so we go up two levels to reach the root workspace folder
-  const backendDir = path.resolve(__dirname, '../../the-guardian-of-kali_backend');
+  // When an external launcher already started the backend, do not spawn a second
+  // instance (that would collide on port 8765).
+  if (process.env.GUARDIAN_SKIP_BACKEND === '1') {
+    console.log('GUARDIAN_SKIP_BACKEND=1 set; using the externally managed backend.');
+    return;
+  }
+
+  const backendDir = resolveBackendDir();
   const pythonExe = path.join(backendDir, '.venv', 'Scripts', 'python.exe');
-  
+
+  if (!fs.existsSync(pythonExe)) {
+    console.error(`Backend python not found at ${pythonExe}. Start the backend manually.`);
+    return;
+  }
+
   backendProcess = spawn(pythonExe, ['-m', 'src.main'], {
     cwd: backendDir,
-    detached: false
+    detached: false,
   });
 
   backendProcess.stdout?.on('data', (data) => console.log(`Backend: ${data}`));

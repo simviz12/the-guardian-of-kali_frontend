@@ -3,21 +3,33 @@
 
 ---
 
-## ⚡ DESCARGA E INSTALACIÓN EN 1 CLIC (.BAT)
+## ⚡ INSTALACIÓN Y ARRANQUE EN 1 CLIC (`setup_and_run.bat`)
 
-Puedes descargar directamente el instalador automatizado con este enlace directo:
+La forma recomendada de instalar **y** ejecutar todo el ecosistema (backend + frontend) es el
+script **`setup_and_run.bat`** que vive en la raíz de este repositorio. Hace todo de una sola vez:
 
-👉 **[Descargar Instalar_Guardian.bat](https://raw.githubusercontent.com/simviz12/the-guardian-of-kali_frontend/main/Instalar_Guardian.bat)**
+1. Verifica **Git, Node.js y Python** (y avisa si falta WSL2).
+2. Resuelve el backend como carpeta hermana (`..\the-guardian-of-kali_backend` o `..\backend`) y lo **clona si falta**.
+3. Crea los archivos **`.env`** a partir de las plantillas **`.env.example`** (backend y frontend).
+4. Instala dependencias del backend (**`.venv` + `pip`**) y del frontend (**`npm install`**).
+5. Reconstruye **`node-pty`** para la ABI de Electron y compila el bundle de escritorio.
+6. Arranca el **backend FastAPI**, espera a que `/health` responda y **lanza la app de escritorio**.
 
-### ¿Cómo se usa?
-1. Haz clic derecho en el enlace de arriba y selecciona **"Guardar enlace como..."** (o ábrelo y presiona `Ctrl + S`).
-2. Guárdalo con el nombre **`Instalar_Guardian.bat`** en cualquier carpeta donde quieras instalar el proyecto.
-3. Haz **doble clic** sobre `Instalar_Guardian.bat`. El script se encargará automáticamente de:
-   - Descargar el Backend y el Frontend desde GitHub.
-   - Configurar el entorno virtual de Python (`.venv`) e instalar librerías.
-   - Instalar dependencias de Node.js y compilar la aplicación.
-   - Generar el archivo **`Iniciar_Guardian.bat`** para abrir la app en 2 segundos.
+```bat
+:: Desde la carpeta del frontend, doble clic o:
+setup_and_run.bat
+```
 
+> El script evita arrancar el backend dos veces: exporta `GUARDIAN_SKIP_BACKEND=1` y
+> `GUARDIAN_BACKEND_DIR` para que Electron use el backend que él mismo ya levantó.
+
+### Requisitos mínimos
+- **Windows 10/11** con **WSL2** y la distro **`kali-linux`** instalada (`wsl --install -d kali-linux`).
+- **Node.js ≥ 20**, **Python ≥ 3.11**, **Git**.
+- Una **API Key de Google Gemini** (o de Anthropic Claude) para el copiloto IA — se configura en `AJUSTES` o en el `.env` del backend.
+
+> Alternativa histórica: `Instalar_Guardian.bat` (solo instala y genera `Iniciar_Guardian.bat`).
+> `setup_and_run.bat` reemplaza ese flujo instalando **y** ejecutando en un solo paso.
 
 ---
 
@@ -62,7 +74,10 @@ the-guardian-of-kali_frontend/
 3. **🌐 Internacionalización Integral (`ES | EN`):**
    - Selector tipo cápsula con soporte completo de traducción para toda la aplicación.
 4. **💻 Puente Terminal PTY:**
-   - Acceso nativo e interactivo como `root` a Kali Linux en WSL2.
+   - Acceso nativo e interactivo como `root` a Kali Linux en WSL2 vía `node-pty`.
+   - **Historial de comandos** con flechas `↑/↓`, comando/botón **`clear`** (y `Ctrl+L`), y buffer acotado a 2000 líneas para evitar fugas de memoria.
+5. **🚀 Splash Screen:**
+   - Animación de bienvenida (reutiliza `public/intro.mp4`) que valida la conexión con el backend y los sockets antes de entrar, con transición automática y timeout de seguridad si el backend no responde.
 
 ---
 
