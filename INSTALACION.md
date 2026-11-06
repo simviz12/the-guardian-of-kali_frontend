@@ -3,6 +3,9 @@
 Esta guía explica, paso a paso, todo lo que debe hacer la persona que instala la
 aplicación por primera vez en un equipo nuevo. Síguela en orden.
 
+> 🐧 **¿Estás en Linux o macOS?** Consulta la guía específica:
+> 👉 **[Guía de Instalación para macOS y Linux](./INSTALACION_LINUX_MAC.md)**
+
 > ⏱️ **Tiempo estimado:** 20–40 min (la mayor parte es la descarga de Kali Linux).
 > 🔁 Varios pasos piden **reiniciar** el equipo: es normal.
 

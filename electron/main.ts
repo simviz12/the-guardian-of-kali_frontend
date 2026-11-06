@@ -1,6 +1,7 @@
 /**
  * Electron main process entry point.
- * Manages application lifecycle, native window instances, and the WSL PTY bridge.
+ * Manages application lifecycle, native window instances, and the terminal bridge.
+ * Cross-platform compatible with Windows (WSL2), Linux, and macOS.
  */
 import { app, BrowserWindow } from 'electron';
 import * as path from 'path';
@@ -12,18 +13,35 @@ import { spawn, ChildProcess } from 'child_process';
 let terminalBridge: WslTerminalBridge | null = null;
 let backendProcess: ChildProcess | null = null;
 
+function resolvePythonExe(backendDir: string): string | null {
+  const candidates = process.platform === 'win32'
+    ? [
+        path.join(backendDir, '.venv', 'Scripts', 'python.exe'),
+        path.join(backendDir, '.venv', 'python.exe'),
+      ]
+    : [
+        path.join(backendDir, '.venv', 'bin', 'python3'),
+        path.join(backendDir, '.venv', 'bin', 'python'),
+      ];
+
+  for (const p of candidates) {
+    if (fs.existsSync(p)) return p;
+  }
+  return null;
+}
+
 function resolveBackendDir(): string {
-  // Allow the launcher (setup_and_run.bat) to pin the backend location.
+  // Allow launcher scripts (setup_and_run / env) to pin the backend location.
   if (process.env.GUARDIAN_BACKEND_DIR) {
     return path.resolve(process.env.GUARDIAN_BACKEND_DIR);
   }
-  // Otherwise probe the common sibling layouts relative to the frontend repo.
+  // Otherwise probe common sibling layouts relative to the frontend repo.
   const candidates = [
     path.resolve(__dirname, '../../the-guardian-of-kali_backend'),
     path.resolve(__dirname, '../../backend'),
   ];
   for (const dir of candidates) {
-    if (fs.existsSync(path.join(dir, '.venv', 'Scripts', 'python.exe'))) return dir;
+    if (resolvePythonExe(dir)) return dir;
   }
   return candidates[0];
 }
@@ -37,10 +55,10 @@ function startBackend() {
   }
 
   const backendDir = resolveBackendDir();
-  const pythonExe = path.join(backendDir, '.venv', 'Scripts', 'python.exe');
+  const pythonExe = resolvePythonExe(backendDir);
 
-  if (!fs.existsSync(pythonExe)) {
-    console.error(`Backend python not found at ${pythonExe}. Start the backend manually.`);
+  if (!pythonExe) {
+    console.error(`Backend python not found in ${backendDir}. Start the backend manually.`);
     return;
   }
 
@@ -70,7 +88,7 @@ function createWindow(): void {
     mainWindow.show();
   });
 
-  // Initialize and attach the WSL terminal bridge for the operator user
+  // Initialize and attach the terminal bridge (WSL on Win32, native shell on Linux/macOS)
   terminalBridge = new WslTerminalBridge({
     distro: 'kali-linux',
     user: 'root',
@@ -94,6 +112,12 @@ function createWindow(): void {
 app.whenReady().then(() => {
   startBackend();
   createWindow();
+
+  app.on('activate', () => {
+    if (BrowserWindow.getAllWindows().length === 0) {
+      createWindow();
+    }
+  });
 });
 
 app.on('window-all-closed', () => {

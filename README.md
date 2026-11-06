@@ -3,36 +3,51 @@
 
 ---
 
-> 📖 **¿Instalas por primera vez en un equipo nuevo?** Sigue la guía paso a paso:
-> **[INSTALACION.md](./INSTALACION.md)** (incluye cómo preparar WSL2 + Kali Linux).
+> 📖 **Guías de instalación paso a paso:**
+> - 🪟 **Windows (WSL2 + Kali):** [INSTALACION.md](./INSTALACION.md)
+> - 🍎 **macOS y 🐧 Linux (Nativo / Kali Linux):** [INSTALACION_LINUX_MAC.md](./INSTALACION_LINUX_MAC.md)
 
-## ⚡ INSTALACIÓN Y ARRANQUE EN 1 CLIC (`setup_and_run.bat`)
+---
 
-La forma recomendada de instalar **y** ejecutar todo el ecosistema (backend + frontend) es el
-script **`setup_and_run.bat`** que vive en la raíz de este repositorio. Hace todo de una sola vez:
+## ⚡ INSTALACIÓN Y ARRANQUE EN 1 CLIC
 
-1. Verifica **Git, Node.js y Python** — y los **instala automáticamente con `winget`** si faltan (avisa si falta WSL2).
-2. **Clona los repos que falten** (frontend y/o backend): puedes descargar solo el `.bat` en una carpeta vacía y él se descarga ambos proyectos. Enlace directo: `https://raw.githubusercontent.com/simviz12/the-guardian-of-kali_frontend/main/setup_and_run.bat`
-3. Crea los archivos **`.env`** a partir de las plantillas **`.env.example`** (backend y frontend).
-4. Instala dependencias del backend (**`.venv` + `pip`**) y del frontend (**`npm install`**).
-5. Reconstruye **`node-pty`** para la ABI de Electron y compila el bundle de escritorio.
-6. Arranca el **backend FastAPI**, espera a que `/health` responda y **lanza la app de escritorio**.
+El proyecto cuenta con instaladores automáticos para **todas las plataformas**:
 
+### 🪟 En Windows (`setup_and_run.bat`)
 ```bat
-:: Desde la carpeta del frontend, doble clic o:
 setup_and_run.bat
 ```
+*(Verifica e instala Git, Node y Python vía `winget`, clona el backend, configura venv, compila y abre la app).*
 
-> El script evita arrancar el backend dos veces: exporta `GUARDIAN_SKIP_BACKEND=1` y
-> `GUARDIAN_BACKEND_DIR` para que Electron use el backend que él mismo ya levantó.
+### 🐧 En Linux y 🍎 En macOS (`setup_and_run.sh` / `install.sh`)
+```bash
+chmod +x setup_and_run.sh install.sh
+./setup_and_run.sh
+```
+O para instalar una sola vez y generar accesos directos:
+```bash
+./install.sh
+```
+- **macOS:** Genera `Iniciar_Guardian.command` para abrir con **doble clic en el Finder**.
+- **Linux:** Genera un acceso directo en tu menú de aplicaciones (`the-guardian-of-kali.desktop`) y `./Iniciar_Guardian.sh`.
 
-### Requisitos mínimos
-- **Windows 10/11** con **WSL2** y la distro **`kali-linux`** instalada (`wsl --install -d kali-linux`).
-- **Node.js ≥ 20**, **Python ≥ 3.11**, **Git**.
-- Una **API Key de Google Gemini** (o de Anthropic Claude) para el copiloto IA — se configura en `AJUSTES` o en el `.env` del backend.
+---
 
-> Alternativa histórica: `Instalar_Guardian.bat` (solo instala y genera `Iniciar_Guardian.bat`).
-> `setup_and_run.bat` reemplaza ese flujo instalando **y** ejecutando en un solo paso.
+## 📦 GENERAR INSTALADORES PORTABLES (ELECTRON-BUILDER)
+
+Puedes compilar binarios de instalación para distribución:
+
+```bash
+# Para Linux (.AppImage, .deb, .tar.gz):
+npm run package:linux
+
+# Para macOS (.dmg, .zip):
+npm run package:mac
+
+# Para Windows (.exe NSIS):
+npm run package:win
+```
+Los archivos de distribución resultantes se generan en la carpeta `release/`.
 
 ---
 
@@ -60,9 +75,15 @@ the-guardian-of-kali_frontend/
 │   └── main.tsx              # Punto de entrada de React
 │
 ├── electron/                 # Código Nativo (Main Process Node.js)
-│   ├── pty/                  # Manejo de Pseudo-Terminales WSL2 (wsl_terminal_bridge.ts)
+│   ├── pty/                  # Manejo de Pseudo-Terminales WSL2 / Linux / macOS (wsl_terminal_bridge.ts)
 │   ├── main.ts               # Ciclo de vida de la ventana Electron e IPC Main
 │   └── preload.ts            # Seguridad IPC (Exposición segura de APIs a React)
+│
+├── install.sh                # Instalador asistido para Linux y macOS
+├── setup_and_run.sh          # Instalación + arranque en 1 paso (Linux/macOS)
+├── Iniciar_Guardian.sh       # Lanzador diario rápido para Linux/macOS
+├── Iniciar_Guardian.command  # Lanzador doble clic para macOS Finder
+└── the-guardian-of-kali.desktop # Lanzador de aplicaciones para Linux
 ```
 
 ---
@@ -76,8 +97,10 @@ the-guardian-of-kali_frontend/
    - Conmutador en tiempo real con icono de sol/luna en la barra superior.
 3. **🌐 Internacionalización Integral (`ES | EN`):**
    - Selector tipo cápsula con soporte completo de traducción para toda la aplicación.
-4. **💻 Puente Terminal PTY:**
-   - Acceso nativo e interactivo como `root` a Kali Linux en WSL2 vía `node-pty`.
+4. **💻 Puente Terminal PTY Multiplataforma:**
+   - En **Windows**: Acceso nativo interactivo a Kali Linux en WSL2 vía `node-pty`.
+   - En **Linux**: Conexión nativa interactiva a tu shell local (`/bin/bash`).
+   - En **macOS**: Conexión nativa interactiva a tu shell local (`/bin/zsh` o `/bin/bash`).
    - **Historial de comandos** con flechas `↑/↓`, comando/botón **`clear`** (y `Ctrl+L`), y buffer acotado a 2000 líneas para evitar fugas de memoria.
 5. **🚀 Splash Screen:**
    - Animación de bienvenida (reutiliza `public/intro.mp4`) que valida la conexión con el backend y los sockets antes de entrar, con transición automática y timeout de seguridad si el backend no responde.

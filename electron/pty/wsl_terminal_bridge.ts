@@ -1,7 +1,8 @@
 /**
- * WSL PTY Process Bridge.
+ * Terminal PTY Process Bridge.
  * Spawns and manages a node-pty pseudoterminal session connected directly
- * to a real Kali Linux instance on WSL2 with streaming I/O and cleanup logic.
+ * to a real Kali Linux instance on WSL2 (on Windows) or the native shell
+ * (on Linux and macOS) with streaming I/O and cleanup logic.
  */
 import * as pty from 'node-pty';
 import { BrowserWindow, ipcMain, IpcMainEvent } from 'electron';
@@ -29,7 +30,7 @@ export class WslTerminalBridge {
   }
 
   /**
-   * Spawns the underlying wsl.exe process and connects IPC events to the window.
+   * Spawns the underlying shell process and connects IPC events to the window.
    */
   public attach(window: BrowserWindow): void {
     this.window = window;
@@ -38,19 +39,60 @@ export class WslTerminalBridge {
   }
 
   /**
-   * Spawns wsl.exe attaching to the Kali Linux distribution under the specified user.
+   * Spawns the PTY process:
+   * - Windows: wsl.exe attaching to the Kali Linux distro (fallback: powershell.exe)
+   * - macOS: default login shell ($SHELL or /bin/zsh)
+   * - Linux: default login shell ($SHELL or /bin/bash)
    */
   private spawnPtyProcess(): void {
-    const shell = 'wsl.exe';
-    const args = ['-d', this.distro, '-u', this.user];
+    let shell: string;
+    let args: string[] = [];
 
-    this.ptyProcess = pty.spawn(shell, args, {
-      name: 'xterm-256color',
-      cols: this.defaultCols,
-      rows: this.defaultRows,
-      cwd: process.env.HOME || process.env.USERPROFILE,
-      env: process.env as Record<string, string>,
-    });
+    if (process.platform === 'win32') {
+      shell = 'wsl.exe';
+      args = ['-d', this.distro, '-u', this.user];
+    } else if (process.platform === 'darwin') {
+      shell = process.env.SHELL || '/bin/zsh';
+      args = ['-l'];
+    } else {
+      shell = process.env.SHELL || '/bin/bash';
+      args = ['-l'];
+    }
+
+    const homeDir = process.env.HOME || process.env.USERPROFILE || process.cwd();
+
+    try {
+      this.ptyProcess = pty.spawn(shell, args, {
+        name: 'xterm-256color',
+        cols: this.defaultCols,
+        rows: this.defaultRows,
+        cwd: homeDir,
+        env: {
+          ...process.env,
+          TERM: 'xterm-256color',
+          COLORTERM: 'truecolor',
+        } as Record<string, string>,
+      });
+    } catch (err) {
+      console.warn(`Terminal spawn error with ${shell}:`, err);
+      try {
+        const fallbackShell = process.platform === 'win32' ? 'powershell.exe' : '/bin/sh';
+        this.ptyProcess = pty.spawn(fallbackShell, [], {
+          name: 'xterm-256color',
+          cols: this.defaultCols,
+          rows: this.defaultRows,
+          cwd: homeDir,
+          env: process.env as Record<string, string>,
+        });
+      } catch (fallbackErr) {
+        console.error('Fallback terminal spawn failed:', fallbackErr);
+      }
+    }
+
+    if (!this.ptyProcess) {
+      console.error('Unable to initialize terminal pty process.');
+      return;
+    }
 
     // Stream terminal output data to the renderer window in real time
     this.ptyProcess.onData((data: string) => {
@@ -60,7 +102,7 @@ export class WslTerminalBridge {
     });
 
     this.ptyProcess.onExit((e: { exitCode: number; signal?: number }) => {
-      console.log(`WSL terminal session exited with code ${e.exitCode}, signal ${e.signal}`);
+      console.log(`Terminal session exited with code ${e.exitCode}, signal ${e.signal}`);
       this.cleanup();
     });
   }

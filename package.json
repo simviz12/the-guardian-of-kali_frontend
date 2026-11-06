@@ -10,6 +10,10 @@
     "build:electron": "esbuild electron/main.ts --bundle --platform=node --outfile=dist-electron/main.cjs --external:electron --external:node-pty --format=cjs && esbuild electron/preload.ts --bundle --platform=node --outfile=dist-electron/preload.cjs --external:electron --external:node-pty --format=cjs",
     "build": "npm run build:renderer && npm run build:electron",
     "package": "npm run build && electron-builder",
+    "package:win": "npm run build && electron-builder --win",
+    "package:mac": "npm run build && electron-builder --mac",
+    "package:linux": "npm run build && electron-builder --linux",
+    "package:all": "npm run build && electron-builder -mwl",
     "start": "electron .",
     "lint": "eslint ."
   },
@@ -21,6 +25,21 @@
     },
     "win": {
       "target": "nsis"
+    },
+    "mac": {
+      "target": [
+        "dmg",
+        "zip"
+      ],
+      "category": "public.app-category.developer-tools"
+    },
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb",
+        "tar.gz"
+      ],
+      "category": "Development"
     }
   },
   "dependencies": {
