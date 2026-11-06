@@ -12,7 +12,7 @@ La forma recomendada de instalar **y** ejecutar todo el ecosistema (backend + fr
 script **`setup_and_run.bat`** que vive en la raíz de este repositorio. Hace todo de una sola vez:
 
 1. Verifica **Git, Node.js y Python** — y los **instala automáticamente con `winget`** si faltan (avisa si falta WSL2).
-2. Resuelve el backend como carpeta hermana (`..\the-guardian-of-kali_backend` o `..\backend`) y lo **clona si falta**.
+2. **Clona los repos que falten** (frontend y/o backend): puedes descargar solo el `.bat` en una carpeta vacía y él se descarga ambos proyectos. Enlace directo: `https://raw.githubusercontent.com/simviz12/the-guardian-of-kali_frontend/main/setup_and_run.bat`
 3. Crea los archivos **`.env`** a partir de las plantillas **`.env.example`** (backend y frontend).
 4. Instala dependencias del backend (**`.venv` + `pip`**) y del frontend (**`npm install`**).
 5. Reconstruye **`node-pty`** para la ABI de Electron y compila el bundle de escritorio.

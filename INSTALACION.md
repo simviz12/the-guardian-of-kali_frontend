@@ -78,12 +78,21 @@ usando `winget` (el gestor de paquetes incluido en Windows 10 2004+/Windows 11).
 
 ## 3. Obtener e instalar la aplicación (un clic)
 
-1. Descarga/clona el repositorio del **frontend** (donde está el instalador).
-2. Dentro de esa carpeta, haz **doble clic** en **`setup_and_run.bat`**.
+Tienes **dos formas**, ambas con el mismo `setup_and_run.bat`:
+
+**Opción A — solo el instalador (lo más simple):**
+1. Descarga únicamente el `.bat` desde este enlace directo (clic derecho → *Guardar enlace como…*):
+   **https://raw.githubusercontent.com/simviz12/the-guardian-of-kali_frontend/main/setup_and_run.bat**
+2. Guárdalo en una carpeta **vacía** donde quieras instalar el proyecto.
+3. Haz **doble clic**. Él **clona los dos repos** (frontend + backend) ahí mismo y hace todo.
+
+**Opción B — si ya clonaste el repo frontend:**
+1. Entra en la carpeta del frontend.
+2. Haz **doble clic** en **`setup_and_run.bat`** (clona solo el backend si falta).
 
 El script hace todo automáticamente:
 - ✅ Verifica Git, Node.js y Python — **y los instala con `winget` si faltan** (avisa si falta WSL).
-- ✅ Descarga el **backend** si no está al lado (carpeta hermana).
+- ✅ **Clona el frontend y el backend** que falten desde GitHub.
 - ✅ Crea los archivos `.env` a partir de las plantillas.
 - ✅ Instala dependencias de Python (`.venv`) y de Node (`npm`).
 - ✅ Reconstruye `node-pty` para Electron y compila la app.
@@ -134,6 +143,6 @@ La **terminal de Kali funciona sin API Key**; la clave solo activa el **copiloto
 - [ ] `wsl --install -d kali-linux` + reiniciar + crear usuario Linux
 - [ ] `wsl -l -v` muestra **kali-linux / VERSION 2**
 - [ ] Git, Node.js y Python (los instala el `.bat` con winget si faltan)
-- [ ] Doble clic en **`setup_and_run.bat`**
+- [ ] Descargar el `.bat` en una carpeta vacía y hacer **doble clic** (clona ambos repos)
 - [ ] API Key de Gemini puesta en **AJUSTES**
 - [ ] **API OK** visible y `whoami` responde en la terminal

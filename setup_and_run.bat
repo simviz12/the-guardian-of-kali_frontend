@@ -5,16 +5,24 @@ color 0A
 
 :: ============================================================================
 :: setup_and_run.bat  -  One-click install + launch for The Guardian of Kali
-::   1. Verifies Git, Node.js and Python are installed
-::   2. Resolves (or clones) the sibling backend repository
-::   3. Creates .env files from the .env.example templates
-::   4. Installs backend (.venv + pip) and frontend (npm) dependencies
-::   5. Rebuilds node-pty for Electron's ABI and builds the desktop bundle
-::   6. Starts the FastAPI backend, waits for health, then launches the app
+::
+:: Works in two modes automatically:
+::   A) Standalone: download just this .bat into an empty folder and double-click.
+::      It clones BOTH repositories (frontend + backend) and sets everything up.
+::   B) Inside the frontend repo: it uses the current checkout and clones only
+::      the sibling backend if missing.
+::
+:: Steps:
+::   1. Verify / auto-install Git, Node.js and Python (via winget when available)
+::   2. Resolve or clone the frontend and backend repositories
+::   3. Create .env files from the .env.example templates
+::   4. Install backend (.venv + pip) and frontend (npm) dependencies
+::   5. Rebuild node-pty for Electron's ABI and build the desktop bundle
+::   6. Start the FastAPI backend, wait for health, then launch the app
 :: ============================================================================
 
 cd /d "%~dp0"
-set "FRONTEND_DIR=%CD%"
+set "ROOT=%CD%"
 
 echo ======================================================================
 echo          THE GUARDIAN OF KALI - SETUP AND RUN
@@ -22,23 +30,21 @@ echo ======================================================================
 echo.
 
 :: ----------------------------------------------------------------------------
-:: 1. Environment prerequisites
+:: 1. Environment prerequisites (installed first, so git is available to clone)
 :: ----------------------------------------------------------------------------
 echo [*] Checking prerequisites...
 
-:: winget (Windows Package Manager) lets us auto-install missing base tools.
 set "HAVE_WINGET=0"
 where winget >nul 2>&1 && set "HAVE_WINGET=1"
 set "DID_INSTALL=0"
 
-call :ensure_tool git  "Git.Git"                 "https://git-scm.com/"
+call :ensure_tool git  "Git.Git"              "https://git-scm.com/"
 if errorlevel 1 exit /b 1
-call :ensure_tool node "OpenJS.NodeJS.LTS"       "https://nodejs.org/"
+call :ensure_tool node "OpenJS.NodeJS.LTS"    "https://nodejs.org/"
 if errorlevel 1 exit /b 1
-call :ensure_tool python "Python.Python.3.12"    "https://python.org/"
+call :ensure_tool python "Python.Python.3.12" "https://python.org/"
 if errorlevel 1 exit /b 1
 
-:: If we installed anything, PATH changed: refresh it in this session and re-verify.
 if "%DID_INSTALL%"=="1" (
     echo [*] Refreshing environment after installation...
     call :refresh_path
@@ -53,49 +59,39 @@ if "%DID_INSTALL%"=="1" (
 
 where wsl >nul 2>&1 && (echo    [OK] WSL detected) || (echo    [WARN] WSL not detected - the Kali terminal needs WSL2 with the kali-linux distro ^(see INSTALACION.md^).)
 echo.
-goto :after_prereqs
 
-:: --- helper: ensure a tool exists, installing via winget when possible ---------
-:ensure_tool
-set "TOOL_CMD=%~1"
-set "TOOL_ID=%~2"
-set "TOOL_URL=%~3"
-where %TOOL_CMD% >nul 2>&1 && (echo    [OK] %TOOL_CMD% & goto :eof)
-if "%HAVE_WINGET%"=="1" (
-    echo    [..] %TOOL_CMD% not found - installing with winget ^(%TOOL_ID%^)...
-    winget install -e --id %TOOL_ID% --accept-source-agreements --accept-package-agreements --silent
-    set "DID_INSTALL=1"
-    goto :eof
+:: ----------------------------------------------------------------------------
+:: 2. Resolve or clone BOTH repositories
+:: ----------------------------------------------------------------------------
+echo [*] Resolving repositories...
+
+set "FE_REPO=https://github.com/simviz12/the-guardian-of-kali_frontend.git"
+set "BE_REPO=https://github.com/simviz12/the-guardian-of-kali_backend.git"
+
+:: -- Frontend --
+set "FRONTEND_DIR="
+if exist "%ROOT%\package.json" set "FRONTEND_DIR=%ROOT%"
+if not defined FRONTEND_DIR if exist "%ROOT%\the-guardian-of-kali_frontend\package.json" set "FRONTEND_DIR=%ROOT%\the-guardian-of-kali_frontend"
+if not defined FRONTEND_DIR (
+    echo    Cloning frontend...
+    git clone %FE_REPO% "%ROOT%\the-guardian-of-kali_frontend" || (echo [ERROR] frontend clone failed. & pause & exit /b 1)
+    set "FRONTEND_DIR=%ROOT%\the-guardian-of-kali_frontend"
 )
-echo [ERROR] %TOOL_CMD% not found and winget is unavailable.
-echo         Install it manually from %TOOL_URL% ^(for Python, check "Add to PATH"^), then re-run.
-pause
-exit /b 1
+echo    [OK] Frontend: !FRONTEND_DIR!
 
-:: --- helper: reload PATH from the registry (user + machine) ---------------------
-:refresh_path
-for /f "usebackq tokens=2,*" %%A in (`reg query "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v Path 2^>nul`) do set "MACHINE_PATH=%%B"
-for /f "usebackq tokens=2,*" %%A in (`reg query "HKCU\Environment" /v Path 2^>nul`) do set "USER_PATH=%%B"
-set "PATH=%MACHINE_PATH%;%USER_PATH%"
-goto :eof
+:: Parent folder of the frontend: the backend lives alongside it.
+for %%I in ("!FRONTEND_DIR!\..") do set "PARENT=%%~fI"
 
-:after_prereqs
-
-:: ----------------------------------------------------------------------------
-:: 2. Resolve the backend repository (sibling folder, cloned if missing)
-:: ----------------------------------------------------------------------------
+:: -- Backend --
 set "BACKEND_DIR="
-if exist "%FRONTEND_DIR%\..\the-guardian-of-kali_backend\requirements.txt" set "BACKEND_DIR=%FRONTEND_DIR%\..\the-guardian-of-kali_backend"
-if not defined BACKEND_DIR if exist "%FRONTEND_DIR%\..\backend\requirements.txt" set "BACKEND_DIR=%FRONTEND_DIR%\..\backend"
-
+if exist "!PARENT!\the-guardian-of-kali_backend\requirements.txt" set "BACKEND_DIR=!PARENT!\the-guardian-of-kali_backend"
+if not defined BACKEND_DIR if exist "!PARENT!\backend\requirements.txt" set "BACKEND_DIR=!PARENT!\backend"
 if not defined BACKEND_DIR (
-    echo [*] Backend not found next to the frontend. Cloning...
-    pushd "%FRONTEND_DIR%\.."
-    git clone https://github.com/simviz12/the-guardian-of-kali_backend.git
-    popd
-    set "BACKEND_DIR=%FRONTEND_DIR%\..\the-guardian-of-kali_backend"
+    echo    Cloning backend...
+    git clone %BE_REPO% "!PARENT!\the-guardian-of-kali_backend" || (echo [ERROR] backend clone failed. & pause & exit /b 1)
+    set "BACKEND_DIR=!PARENT!\the-guardian-of-kali_backend"
 )
-echo    [OK] Backend: !BACKEND_DIR!
+echo    [OK] Backend:  !BACKEND_DIR!
 echo.
 
 :: ----------------------------------------------------------------------------
@@ -106,8 +102,8 @@ if not exist "!BACKEND_DIR!\.env" if exist "!BACKEND_DIR!\.env.example" (
     copy /Y "!BACKEND_DIR!\.env.example" "!BACKEND_DIR!\.env" >nul
     echo    [OK] Created backend .env (edit it to add your API key)
 )
-if not exist "%FRONTEND_DIR%\.env" if exist "%FRONTEND_DIR%\.env.example" (
-    copy /Y "%FRONTEND_DIR%\.env.example" "%FRONTEND_DIR%\.env" >nul
+if not exist "!FRONTEND_DIR!\.env" if exist "!FRONTEND_DIR!\.env.example" (
+    copy /Y "!FRONTEND_DIR!\.env.example" "!FRONTEND_DIR!\.env" >nul
     echo    [OK] Created frontend .env
 )
 echo.
@@ -133,11 +129,13 @@ echo.
 :: 5. Frontend dependencies + native rebuild + build
 :: ----------------------------------------------------------------------------
 echo [*] Installing frontend dependencies...
-call npm install || (echo [ERROR] npm install failed. & pause & exit /b 1)
+pushd "!FRONTEND_DIR!"
+call npm install || (echo [ERROR] npm install failed. & popd & pause & exit /b 1)
 echo    Rebuilding native modules (node-pty) for Electron...
 call npx electron-rebuild -f -w node-pty >nul 2>&1 || echo    [WARN] electron-rebuild skipped - relying on bundled prebuilds.
 echo    Building desktop bundle...
-call npm run build || (echo [ERROR] build failed. & pause & exit /b 1)
+call npm run build || (echo [ERROR] build failed. & popd & pause & exit /b 1)
+popd
 echo    [OK] Frontend built.
 echo.
 
@@ -146,7 +144,10 @@ echo.
 :: ----------------------------------------------------------------------------
 echo [*] Starting the FastAPI backend...
 for /f "tokens=5" %%p in ('netstat -ano 2^>nul ^| findstr "127.0.0.1:8765" ^| findstr "LISTENING"') do taskkill /PID %%p /F >nul 2>&1
-start "Guardian Backend" /B cmd /c ""!BACKEND_DIR!\.venv\Scripts\python.exe" -m src.main"
+:: pushd so the started process inherits the backend dir as its working directory.
+pushd "!BACKEND_DIR!"
+start "Guardian Backend" /B ".venv\Scripts\python.exe" -m src.main
+popd
 
 echo    Waiting for backend health at http://127.0.0.1:8765/health ...
 set /a tries=0
@@ -165,7 +166,37 @@ echo [*] Launching The Guardian of Kali desktop app...
 :: The backend is already managed by this script; tell Electron not to spawn another.
 set "GUARDIAN_SKIP_BACKEND=1"
 set "GUARDIAN_BACKEND_DIR=!BACKEND_DIR!"
+pushd "!FRONTEND_DIR!"
 call npx electron .
+popd
 echo.
 echo [*] Application closed.
 exit /b 0
+
+:: ============================================================================
+:: Helpers
+:: ============================================================================
+
+:: --- ensure a tool exists, installing via winget when possible ---------------
+:ensure_tool
+set "TOOL_CMD=%~1"
+set "TOOL_ID=%~2"
+set "TOOL_URL=%~3"
+where %TOOL_CMD% >nul 2>&1 && (echo    [OK] %TOOL_CMD% & goto :eof)
+if "%HAVE_WINGET%"=="1" (
+    echo    [..] %TOOL_CMD% not found - installing with winget ^(%TOOL_ID%^)...
+    winget install -e --id %TOOL_ID% --accept-source-agreements --accept-package-agreements --silent
+    set "DID_INSTALL=1"
+    goto :eof
+)
+echo [ERROR] %TOOL_CMD% not found and winget is unavailable.
+echo         Install it manually from %TOOL_URL% ^(for Python, check "Add to PATH"^), then re-run.
+pause
+exit /b 1
+
+:: --- reload PATH from the registry (machine + user) ---------------------------
+:refresh_path
+for /f "usebackq tokens=2,*" %%A in (`reg query "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v Path 2^>nul`) do set "MACHINE_PATH=%%B"
+for /f "usebackq tokens=2,*" %%A in (`reg query "HKCU\Environment" /v Path 2^>nul`) do set "USER_PATH=%%B"
+set "PATH=%MACHINE_PATH%;%USER_PATH%"
+goto :eof
