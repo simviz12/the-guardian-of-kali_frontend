@@ -84,6 +84,11 @@ const translations: Record<Language, Record<string, string>> = {
     'terminal.placeholder': 'Escribe tu comando aquí (ej. nmap -sV 10.10.10.10)...',
     'terminal.execute': 'EJECUTAR COMANDO',
     'terminal.hint': 'Presiona ↵ Enter para ejecutar directamente en la sesión WSL2',
+    'terminal.clear': 'Limpiar',
+    'terminal.history_hint': '↑/↓ Historial de comandos',
+    'splash.connecting': 'Estableciendo conexión segura...',
+    'splash.waiting': 'Esperando al backend...',
+    'splash.ready': 'Conexión establecida',
 
     // Chat
     'chat.header.title': 'Copiloto de Seguridad IA',
@@ -237,6 +242,11 @@ const translations: Record<Language, Record<string, string>> = {
     'terminal.placeholder': 'Type your command here (e.g. nmap -sV 10.10.10.10)...',
     'terminal.execute': 'EXECUTE COMMAND',
     'terminal.hint': 'Press ↵ Enter to execute directly inside the WSL2 session',
+    'terminal.clear': 'Clear',
+    'terminal.history_hint': '↑/↓ Command history',
+    'splash.connecting': 'Establishing secure connection...',
+    'splash.waiting': 'Waiting for backend...',
+    'splash.ready': 'Connection established',
 
     // Chat
     'chat.header.title': 'AI Security Copilot',

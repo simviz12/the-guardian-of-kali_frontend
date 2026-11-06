@@ -10,5 +10,7 @@ export interface TerminalBridgeAPI {
 declare global {
   interface Window {
     terminalAPI: TerminalBridgeAPI;
+    /** Returns the last visible lines of the terminal buffer (set by TerminalView). */
+    getTerminalText?: () => string;
   }
 }

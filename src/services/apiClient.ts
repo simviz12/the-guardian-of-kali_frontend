@@ -361,8 +361,8 @@ export class BackendApiClient {
     });
   }
 
-    async logManualCommand(command: string, sessionId?: string | null, origin: string = 'MANUAL_USER'): Promise<ApiResult<any>> {
-    return this.request<any>('/history/log', {
+    async logManualCommand(command: string, sessionId?: string | null, origin: string = 'MANUAL_USER'): Promise<ApiResult<{ ok: boolean; error?: string }>> {
+    return this.request<{ ok: boolean; error?: string }>('/history/log', {
       method: 'POST',
       body: JSON.stringify({ command, session_id: sessionId ?? null, origin }),
     });

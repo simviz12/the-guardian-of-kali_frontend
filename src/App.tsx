@@ -9,6 +9,7 @@ import { SettingsView } from './components/settings/SettingsView';
 import { GuideView } from './components/guide/GuideView';
 import { ErrorBoundary } from './components/common/ErrorBoundary';
 import { GlobalErrorBanner } from './components/common/GlobalErrorBanner';
+import { SplashScreen } from './components/splash/SplashScreen';
 import { ActiveSessionConfig } from './types/session';
 import { apiClient } from './services/apiClient';
 import { AppErrorDetails } from './types/errors';
@@ -33,6 +34,7 @@ const AppContent: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'terminal' | 'history' | 'settings' | 'guide'>('terminal');
   const [backendStatus, setBackendStatus] = useState<'online' | 'offline' | 'checking'>('checking');
   const [backendError, setBackendError] = useState<AppErrorDetails | null>(null);
+  const [showSplash, setShowSplash] = useState<boolean>(true);
 
   const checkBackendHealth = useCallback(async () => {
     const res = await apiClient.checkHealth();
@@ -62,6 +64,10 @@ const AppContent: React.FC = () => {
       if (interval) clearInterval(interval);
     };
   }, [checkBackendHealth]);
+
+  if (showSplash) {
+    return <SplashScreen backendStatus={backendStatus} onDone={() => setShowSplash(false)} />;
+  }
 
   if (!isAuthenticated) {
     return <LoginScreen onLogin={() => setIsAuthenticated(true)} />;

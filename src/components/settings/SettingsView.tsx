@@ -30,7 +30,7 @@ export const SettingsView: React.FC = () => {
       } else {
         setMessage({ text: 'Error al guardar la API Key: ' + res.error?.message, type: 'error' });
       }
-    } catch (err: any) {
+    } catch {
       setMessage({ text: 'Error al conectar con el servidor.', type: 'error' });
     } finally {
       setIsSaving(false);
