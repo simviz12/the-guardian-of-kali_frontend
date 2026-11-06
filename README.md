@@ -3,12 +3,15 @@
 
 ---
 
+> 📖 **¿Instalas por primera vez en un equipo nuevo?** Sigue la guía paso a paso:
+> **[INSTALACION.md](./INSTALACION.md)** (incluye cómo preparar WSL2 + Kali Linux).
+
 ## ⚡ INSTALACIÓN Y ARRANQUE EN 1 CLIC (`setup_and_run.bat`)
 
 La forma recomendada de instalar **y** ejecutar todo el ecosistema (backend + frontend) es el
 script **`setup_and_run.bat`** que vive en la raíz de este repositorio. Hace todo de una sola vez:
 
-1. Verifica **Git, Node.js y Python** (y avisa si falta WSL2).
+1. Verifica **Git, Node.js y Python** — y los **instala automáticamente con `winget`** si faltan (avisa si falta WSL2).
 2. Resuelve el backend como carpeta hermana (`..\the-guardian-of-kali_backend` o `..\backend`) y lo **clona si falta**.
 3. Crea los archivos **`.env`** a partir de las plantillas **`.env.example`** (backend y frontend).
 4. Instala dependencias del backend (**`.venv` + `pip`**) y del frontend (**`npm install`**).
