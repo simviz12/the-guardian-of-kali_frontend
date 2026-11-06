@@ -48,8 +48,8 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ activeSession }) => {
     if (!inputValue.trim() && !readTerminal) return;
 
     let terminalContext = '';
-    if (readTerminal && (window as any).getTerminalText) {
-      terminalContext = (window as any).getTerminalText();
+    if (readTerminal && window.getTerminalText) {
+      terminalContext = window.getTerminalText();
     }
 
     const finalPrompt = terminalContext 
@@ -87,11 +87,12 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ activeSession }) => {
           timestamp: new Date().toISOString()
         }]);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
       setMessages((prev) => [...prev, {
         id: (Date.now() + 1).toString(),
         sender: 'ai',
-        text: `Error de conexión: ${err.message}`,
+        text: `Error de conexión: ${message}`,
         timestamp: new Date().toISOString()
       }]);
     } finally {

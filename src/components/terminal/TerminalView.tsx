@@ -14,6 +14,56 @@ export const TerminalView: React.FC = () => {
   const [wslError, setWslError] = useState<AppErrorDetails | null>(null);
   const [bannerDismissed, setBannerDismissed] = useState(false);
   const [cmdInput, setCmdInput] = useState('');
+  // Command history navigable with the up/down arrow keys.
+  const commandHistoryRef = useRef<string[]>([]);
+  const historyIndexRef = useRef<number>(-1);
+
+  /** Clears the on-screen terminal buffer (mirrors the shell `clear` command). */
+  const clearTerminal = () => {
+    terminalInstanceRef.current?.clear();
+    terminalInstanceRef.current?.focus();
+  };
+
+  /** Submits a command line to the WSL session and records it in history. */
+  const runCommand = (raw: string) => {
+    const cmd = raw.trim();
+    if (!cmd || !window.terminalAPI) return;
+
+    if (cmd === 'clear' || cmd === 'cls') {
+      clearTerminal();
+    } else {
+      window.terminalAPI.sendInput(cmd + String.fromCharCode(13));
+      apiClient
+        .logManualCommand(cmd, localStorage.getItem('guardian-session-id') || null)
+        .catch(() => {});
+    }
+
+    // De-duplicate consecutive entries, then reset the navigation cursor.
+    const hist = commandHistoryRef.current;
+    if (hist[hist.length - 1] !== cmd) hist.push(cmd);
+    if (hist.length > 200) hist.shift();
+    historyIndexRef.current = hist.length;
+    setCmdInput('');
+  };
+
+  /** Navigates command history with the arrow keys from the input field. */
+  const handleInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    const hist = commandHistoryRef.current;
+    if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      if (hist.length === 0) return;
+      historyIndexRef.current = Math.max(0, historyIndexRef.current - 1);
+      setCmdInput(hist[historyIndexRef.current] ?? '');
+    } else if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      if (hist.length === 0) return;
+      historyIndexRef.current = Math.min(hist.length, historyIndexRef.current + 1);
+      setCmdInput(historyIndexRef.current >= hist.length ? '' : hist[historyIndexRef.current]);
+    } else if (e.key === 'l' && e.ctrlKey) {
+      e.preventDefault();
+      clearTerminal();
+    }
+  };
 
   useEffect(() => {
     if (!window.terminalAPI) {
@@ -33,6 +83,7 @@ export const TerminalView: React.FC = () => {
     const term = new Terminal({
       cursorBlink: true,
       cursorStyle: 'block',
+      scrollback: 2000, // Cap retained lines to bound memory (prevents log-buffer leak).
       fontFamily: '"JetBrains Mono", Consolas, "Fira Code", monospace',
       fontSize: 13,
       theme: {
@@ -66,7 +117,11 @@ export const TerminalView: React.FC = () => {
     }
 
     const handleResize = () => {
-      try { fitAddon.fit(); } catch (err) {}
+      try {
+        fitAddon.fit();
+      } catch {
+        /* fit() can throw if the container is not visible yet; safe to ignore. */
+      }
     };
 
     const resizeObserver = new ResizeObserver(() => handleResize());
@@ -85,12 +140,12 @@ export const TerminalView: React.FC = () => {
       term.dispose();
       terminalInstanceRef.current = null;
       fitAddonRef.current = null;
-      (window as any).getTerminalText = undefined;
+      window.getTerminalText = undefined;
     };
   }, []);
 
   useEffect(() => {
-    (window as any).getTerminalText = () => {
+    window.getTerminalText = () => {
       const term = terminalInstanceRef.current;
       if (!term) return '';
       const buffer = term.buffer.active;
@@ -122,6 +177,14 @@ export const TerminalView: React.FC = () => {
             </span>
           </div>
         </div>
+        <button
+          onClick={clearTerminal}
+          title={t('terminal.clear')}
+          className="flex items-center gap-1.5 px-space-md py-1.5 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors font-label-sm text-label-sm"
+        >
+          <span className="material-symbols-outlined text-[16px]">cleaning_services</span>
+          {t('terminal.clear')}
+        </button>
       </div>
       
       {/* Web Preview Mock Banner for Debug */}
@@ -151,16 +214,11 @@ export const TerminalView: React.FC = () => {
 
       {/* Terminal Input Strip */}
       <div className="bg-surface-container-low p-space-lg flex flex-col gap-space-md shadow-inner border-t border-outline-variant">
-        <form 
-                    onSubmit={(e) => {
-              e.preventDefault();
-              if (cmdInput.trim() && window.terminalAPI) {
-                const cmd = cmdInput;
-                window.terminalAPI.sendInput(cmd + String.fromCharCode(13));
-                setCmdInput('');
-                apiClient.logManualCommand(cmd, localStorage.getItem('guardian-session-id') || null).catch(() => {});
-              }
-            }} 
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            runCommand(cmdInput);
+          }}
           className="flex items-center gap-space-md"
         >
           <div className="relative flex-1 flex items-center">
@@ -169,6 +227,7 @@ export const TerminalView: React.FC = () => {
               type="text"
               value={cmdInput}
               onChange={(e) => setCmdInput(e.target.value)}
+              onKeyDown={handleInputKeyDown}
               placeholder={t('terminal.placeholder')}
               className="w-full bg-surface-container font-terminal-stream text-on-surface placeholder:text-outline text-base rounded-lg pl-10 pr-4 py-3 focus:outline-none focus:bg-surface-container-high transition-colors"
               autoComplete="off"
@@ -188,6 +247,10 @@ export const TerminalView: React.FC = () => {
           <span className="flex items-center gap-1.5">
             <span className="material-symbols-outlined text-[14px] text-outline">keyboard_return</span>
             {t('terminal.hint')}
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="material-symbols-outlined text-[14px] text-outline">keyboard_arrow_up</span>
+            {t('terminal.history_hint')}
           </span>
         </div>
       </div>
