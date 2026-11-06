@@ -3,6 +3,9 @@
 
 ---
 
+> 📖 **¿Instalas por primera vez en un equipo nuevo?** Sigue la guía paso a paso:
+> **[INSTALACION.md](./INSTALACION.md)** (incluye cómo preparar WSL2 + Kali Linux).
+
 ## ⚡ INSTALACIÓN Y ARRANQUE EN 1 CLIC (`setup_and_run.bat`)
 
 La forma recomendada de instalar **y** ejecutar todo el ecosistema (backend + frontend) es el
