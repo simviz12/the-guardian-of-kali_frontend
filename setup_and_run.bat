@@ -26,15 +26,60 @@ echo.
 :: ----------------------------------------------------------------------------
 echo [*] Checking prerequisites...
 
-where git >nul 2>&1 || (echo [ERROR] Git not found. Install from https://git-scm.com/ & pause & exit /b 1)
-echo    [OK] Git
-where node >nul 2>&1 || (echo [ERROR] Node.js not found. Install from https://nodejs.org/ & pause & exit /b 1)
-echo    [OK] Node.js
-where python >nul 2>&1 || (echo [ERROR] Python not found. Install from https://python.org/ and check "Add to PATH". & pause & exit /b 1)
-echo    [OK] Python
+:: winget (Windows Package Manager) lets us auto-install missing base tools.
+set "HAVE_WINGET=0"
+where winget >nul 2>&1 && set "HAVE_WINGET=1"
+set "DID_INSTALL=0"
 
-where wsl >nul 2>&1 && (echo    [OK] WSL detected) || (echo    [WARN] WSL not detected - the Kali terminal needs WSL2 with the kali-linux distro.)
+call :ensure_tool git  "Git.Git"                 "https://git-scm.com/"
+if errorlevel 1 exit /b 1
+call :ensure_tool node "OpenJS.NodeJS.LTS"       "https://nodejs.org/"
+if errorlevel 1 exit /b 1
+call :ensure_tool python "Python.Python.3.12"    "https://python.org/"
+if errorlevel 1 exit /b 1
+
+:: If we installed anything, PATH changed: refresh it in this session and re-verify.
+if "%DID_INSTALL%"=="1" (
+    echo [*] Refreshing environment after installation...
+    call :refresh_path
+    where git >nul 2>&1 && where node >nul 2>&1 && where python >nul 2>&1 || (
+        echo.
+        echo [!] Dependencies were installed but are not yet on PATH for this window.
+        echo     Please CLOSE this window and run setup_and_run.bat again.
+        pause
+        exit /b 0
+    )
+)
+
+where wsl >nul 2>&1 && (echo    [OK] WSL detected) || (echo    [WARN] WSL not detected - the Kali terminal needs WSL2 with the kali-linux distro ^(see INSTALACION.md^).)
 echo.
+goto :after_prereqs
+
+:: --- helper: ensure a tool exists, installing via winget when possible ---------
+:ensure_tool
+set "TOOL_CMD=%~1"
+set "TOOL_ID=%~2"
+set "TOOL_URL=%~3"
+where %TOOL_CMD% >nul 2>&1 && (echo    [OK] %TOOL_CMD% & goto :eof)
+if "%HAVE_WINGET%"=="1" (
+    echo    [..] %TOOL_CMD% not found - installing with winget ^(%TOOL_ID%^)...
+    winget install -e --id %TOOL_ID% --accept-source-agreements --accept-package-agreements --silent
+    set "DID_INSTALL=1"
+    goto :eof
+)
+echo [ERROR] %TOOL_CMD% not found and winget is unavailable.
+echo         Install it manually from %TOOL_URL% ^(for Python, check "Add to PATH"^), then re-run.
+pause
+exit /b 1
+
+:: --- helper: reload PATH from the registry (user + machine) ---------------------
+:refresh_path
+for /f "usebackq tokens=2,*" %%A in (`reg query "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v Path 2^>nul`) do set "MACHINE_PATH=%%B"
+for /f "usebackq tokens=2,*" %%A in (`reg query "HKCU\Environment" /v Path 2^>nul`) do set "USER_PATH=%%B"
+set "PATH=%MACHINE_PATH%;%USER_PATH%"
+goto :eof
+
+:after_prereqs
 
 :: ----------------------------------------------------------------------------
 :: 2. Resolve the backend repository (sibling folder, cloned if missing)

@@ -57,17 +57,22 @@ es preparar WSL + Kali, y luego instalar la aplicación.
 
 ---
 
-## 2. Instalar las herramientas base (Git, Node.js, Python)
+## 2. Herramientas base (Git, Node.js, Python) — **automático**
 
-El instalador de la app las **verifica**, pero deben estar presentes. Instálalas así:
+**Normalmente no tienes que hacer nada en este paso.** El instalador del Paso 3
+(`setup_and_run.bat`) detecta si faltan **Git, Node.js o Python** y los **instala solo**
+usando `winget` (el gestor de paquetes incluido en Windows 10 2004+/Windows 11).
+
+> Si el `.bat` instaló alguna de estas herramientas, te pedirá **cerrar la ventana y
+> volver a ejecutarlo** una vez (para que Windows cargue el nuevo PATH). Es normal.
+
+**Solo si tu Windows no tiene `winget`** (versiones antiguas), instálalas a mano:
 
 | Herramienta | Dónde | Nota al instalar |
 |-------------|-------|------------------|
-| **Git** | https://git-scm.com/ | Siguiente → Siguiente (valores por defecto) |
+| **Git** | https://git-scm.com/ | Valores por defecto |
 | **Node.js (LTS ≥ 20)** | https://nodejs.org/ | Deja marcada la opción de añadir al PATH |
-| **Python (≥ 3.11)** | https://python.org/downloads/ | ✅ **Marca "Add python.exe to PATH"** (muy importante) |
-
-> Tras instalarlas, **cierra y vuelve a abrir** cualquier terminal para que tome el PATH.
+| **Python (≥ 3.11)** | https://python.org/downloads/ | ✅ **Marca "Add python.exe to PATH"** |
 
 ---
 
@@ -77,7 +82,7 @@ El instalador de la app las **verifica**, pero deben estar presentes. Instálala
 2. Dentro de esa carpeta, haz **doble clic** en **`setup_and_run.bat`**.
 
 El script hace todo automáticamente:
-- ✅ Verifica Git, Node.js y Python (y avisa si falta WSL).
+- ✅ Verifica Git, Node.js y Python — **y los instala con `winget` si faltan** (avisa si falta WSL).
 - ✅ Descarga el **backend** si no está al lado (carpeta hermana).
 - ✅ Crea los archivos `.env` a partir de las plantillas.
 - ✅ Instala dependencias de Python (`.venv`) y de Node (`npm`).
@@ -128,7 +133,7 @@ La **terminal de Kali funciona sin API Key**; la clave solo activa el **copiloto
 
 - [ ] `wsl --install -d kali-linux` + reiniciar + crear usuario Linux
 - [ ] `wsl -l -v` muestra **kali-linux / VERSION 2**
-- [ ] Git, Node.js (LTS) y Python (con PATH) instalados
+- [ ] Git, Node.js y Python (los instala el `.bat` con winget si faltan)
 - [ ] Doble clic en **`setup_and_run.bat`**
 - [ ] API Key de Gemini puesta en **AJUSTES**
 - [ ] **API OK** visible y `whoami` responde en la terminal
