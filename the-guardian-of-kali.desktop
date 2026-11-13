@@ -1,7 +1,7 @@
 [Desktop Entry]
 Name=The Guardian of Kali
 Comment=Co-piloto de Seguridad y Ciberseguridad con IA
-Exec=bash -c "cd '%k' && ./Iniciar_Guardian.sh"
+Exec=bash -c 'cd "$(dirname "%k")" && ./Iniciar_Guardian.sh'
 Icon=utilities-terminal
 Terminal=false
 Type=Application

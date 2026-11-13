@@ -76,6 +76,11 @@ echo "[*] Abriendo interfaz de escritorio..."
 cd "$FRONTEND_DIR"
 export GUARDIAN_SKIP_BACKEND=1
 export GUARDIAN_BACKEND_DIR="$BACKEND_DIR"
-npx electron .
+# Chromium no puede iniciar su sandbox como root; solo en ese caso se desactiva.
+if [ "$(id -u)" -eq 0 ]; then
+    npx electron . --no-sandbox
+else
+    npx electron .
+fi
 
 echo "[*] Aplicación finalizada."

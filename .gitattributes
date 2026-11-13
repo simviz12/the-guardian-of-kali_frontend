@@ -1,0 +1,7 @@
+# Shell scripts must keep LF endings or bash fails with '\r: command not found'.
+*.sh text eol=lf
+*.command text eol=lf
+*.desktop text eol=lf
+# Batch files must keep CRLF (also when downloaded raw from GitHub): cmd.exe can
+# mis-resolve goto/call labels in LF-only files.
+*.bat -text

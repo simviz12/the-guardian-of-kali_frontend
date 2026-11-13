@@ -140,6 +140,23 @@ ensure_prerequisites() {
 
 ensure_prerequisites
 
+# "sudo" solo si hace falta: root (usuario por defecto en algunos Kali) no lo tiene.
+if [ "$(id -u)" -eq 0 ]; then SUDO=""; else SUDO="sudo"; fi
+
+# Debian/Ubuntu/Kali traen python3 sin el módulo venv, y node-pty (la terminal real)
+# se compila desde el código fuente en Linux: se instalan aunque Python y Node ya existan.
+if [ "$OS_TYPE" = "linux" ] && command -v apt-get >/dev/null 2>&1; then
+    EXTRA=""
+    python3 -c "import ensurepip" >/dev/null 2>&1 || EXTRA="$EXTRA python3-venv python3-pip"
+    { command -v make >/dev/null 2>&1 && command -v g++ >/dev/null 2>&1; } || EXTRA="$EXTRA build-essential"
+    if [ -n "$EXTRA" ]; then
+        echo -e "${CYAN}[*] Se van a instalar paquetes del sistema:$EXTRA (puede pedir tu contraseña)${NC}"
+        $SUDO apt-get update -qq
+        # shellcheck disable=SC2086
+        $SUDO apt-get install -y $EXTRA
+    fi
+fi
+
 # ------------------------------------------------------------------------------
 # 3. Resolver y Clonar Repositorios (Frontend y Backend)
 # ------------------------------------------------------------------------------
@@ -307,7 +324,12 @@ echo "[*] Abriendo interfaz de escritorio..."
 cd "$FRONTEND_DIR"
 export GUARDIAN_SKIP_BACKEND=1
 export GUARDIAN_BACKEND_DIR="$BACKEND_DIR"
-npx electron .
+# Chromium no puede iniciar su sandbox como root; solo en ese caso se desactiva.
+if [ "$(id -u)" -eq 0 ]; then
+    npx electron . --no-sandbox
+else
+    npx electron .
+fi
 
 echo "[*] Aplicación finalizada."
 EOF
