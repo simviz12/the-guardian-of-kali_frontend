@@ -79,6 +79,12 @@ export interface ProposedCommand {
   origin: 'MANUAL_USER' | 'AI';
 }
 
+export interface PolicyEvaluation {
+  action: 'AUTO_EXECUTE' | 'REQUIRE_CONFIRMATION' | 'BLOCK';
+  risk_level: 'LOW' | 'MEDIUM' | 'HIGH' | 'BLOCKED';
+  reason: string;
+}
+
 export interface ChatResponse {
   response: string;
   has_proposed_command: boolean;
@@ -361,10 +367,31 @@ export class BackendApiClient {
     });
   }
 
-    async logManualCommand(command: string, sessionId?: string | null, origin: string = 'MANUAL_USER'): Promise<ApiResult<{ ok: boolean; error?: string }>> {
+  async logManualCommand(
+    command: string,
+    sessionId?: string | null,
+    origin: string = 'MANUAL_USER',
+    blocked: boolean = false
+  ): Promise<ApiResult<{ ok: boolean; error?: string }>> {
     return this.request<{ ok: boolean; error?: string }>('/history/log', {
       method: 'POST',
-      body: JSON.stringify({ command, session_id: sessionId ?? null, origin }),
+      body: JSON.stringify({ command, session_id: sessionId ?? null, origin, blocked }),
+    });
+  }
+
+  /** Runs an AI-proposed command through the backend policy engine (nothing is executed). */
+  async evaluatePolicy(
+    command: string,
+    authorizedTargets: string[],
+    operationMode: string
+  ): Promise<ApiResult<PolicyEvaluation>> {
+    return this.request<PolicyEvaluation>('/policy/evaluate', {
+      method: 'POST',
+      body: JSON.stringify({
+        command,
+        authorized_targets: authorizedTargets,
+        operation_mode: operationMode,
+      }),
     });
   }
 

@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { apiClient, ProposedCommand } from '../../services/apiClient';
+import { apiClient, PolicyEvaluation, ProposedCommand } from '../../services/apiClient';
 import { ActiveSessionConfig } from '../../types/session';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -11,7 +11,9 @@ export interface ChatMessage {
   text: string;
   timestamp: string;
   proposedCommand?: ProposedCommand | null;
-  executionStatus?: 'idle' | 'executing' | 'executed' | 'rejected' | 'failed';
+  executionStatus?: 'idle' | 'executing' | 'executed' | 'rejected' | 'failed' | 'blocked';
+  /** Decision of the backend policy engine for the proposed command. */
+  policy?: PolicyEvaluation | null;
 }
 
 export interface ChatPanelProps {
@@ -68,17 +70,59 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ activeSession }) => {
     setIsLoading(true);
 
     try {
-      const response = await apiClient.sendMessage(finalPrompt, sessionId || undefined);
+      const targets = (activeSession?.authorizedTargets ?? []).map((tg) => tg.value).filter(Boolean);
+      const mode = activeSession?.operationMode ?? 'suggestion';
+      const response = await apiClient.sendMessage(finalPrompt, sessionId || undefined, targets, mode);
 
       if (response.success && response.data) {
+        const proposed = response.data.proposed_command;
+        let policy: PolicyEvaluation | null = null;
+        let status: ChatMessage['executionStatus'] = 'idle';
+
+        if (proposed) {
+          // Every AI command goes through the policy engine before it can run.
+          // If the engine cannot be reached the command is refused (fail closed).
+          const evaluation = await apiClient.evaluatePolicy(proposed.text, targets, mode);
+          policy = evaluation.success
+            ? evaluation.data
+            : {
+                action: 'BLOCK',
+                risk_level: 'BLOCKED',
+                reason: `No se pudo evaluar la política de seguridad: ${evaluation.error.message}`,
+              };
+
+          if (policy.action === 'BLOCK') {
+            status = 'blocked';
+            apiClient.logManualCommand(proposed.text, sessionId, 'AI', true).catch(() => {});
+          } else if (mode === 'autonomous' && policy.action === 'AUTO_EXECUTE' && window.terminalAPI) {
+            // Autonomous mode: commands the engine rates as safe run without asking.
+            status = 'executed';
+            window.terminalAPI.sendInput(proposed.text + '\n');
+            apiClient.logManualCommand(proposed.text, sessionId, 'AI').catch(() => {});
+          }
+        }
+
         setMessages((prev) => [...prev, {
           id: (Date.now() + 1).toString(),
           sender: 'ai',
           text: response.data.response,
-          proposedCommand: response.data.proposed_command,
-          executionStatus: 'idle',
+          proposedCommand: proposed,
+          executionStatus: status,
+          policy,
           timestamp: new Date().toISOString()
         }]);
+
+        // Persist both turns so the copilot keeps the conversation as context.
+        if (sessionId) {
+          await apiClient.saveChatMessage({ session_id: sessionId, sender: 'user', text: userMessage.text });
+          await apiClient.saveChatMessage({
+            session_id: sessionId,
+            sender: 'ai',
+            text: response.data.response || '(comando propuesto)',
+            proposed_command_text: proposed?.text ?? null,
+            execution_status: status === 'idle' ? null : status,
+          });
+        }
       } else {
         setMessages((prev) => [...prev, {
           id: (Date.now() + 1).toString(),
@@ -104,7 +148,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ activeSession }) => {
     if (!window.terminalAPI) return;
     setMessages((prev) => prev.map(m => m.id === msgId ? { ...m, executionStatus: 'executed' } : m));
     window.terminalAPI.sendInput(cmd.text + '\n');
-    apiClient.logManualCommand(cmd.text, activeSession?.sessionId || null, 'AI').catch(() => {});
+    apiClient.logManualCommand(cmd.text, sessionId, 'AI').catch(() => {});
   };
 
   const rejectAction = (msgId: string) => {
@@ -152,8 +196,17 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ activeSession }) => {
                         <span className="material-symbols-outlined text-[16px]">terminal</span>
                         {t('chat.suggested_cmd')}
                       </span>
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-primary/10 text-primary font-label-sm text-label-sm">
-                        {t('chat.risk_analyzed')}
+                      <span
+                        title={msg.policy?.reason}
+                        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded font-label-sm text-label-sm font-bold ${
+                          msg.policy?.risk_level === 'HIGH'
+                            ? 'bg-error-container text-on-error-container'
+                            : msg.policy?.risk_level === 'MEDIUM'
+                            ? 'bg-tertiary-container/30 text-tertiary'
+                            : 'bg-primary/10 text-primary'
+                        }`}
+                      >
+                        {t('chat.risk')}: {msg.policy?.risk_level ?? '?'}
                       </span>
                     </div>
                     <div className="bg-surface-container p-space-md rounded-lg font-terminal-stream text-sm text-primary select-all break-all leading-normal">
@@ -174,6 +227,18 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ activeSession }) => {
                         {t('chat.btn.dismiss')}
                       </button>
                     </div>
+                  </div>
+                )}
+                {msg.proposedCommand && msg.executionStatus === 'blocked' && (
+                  <div className="rounded-xl p-space-lg flex flex-col gap-space-sm mt-2 border border-error bg-error-container/20">
+                    <span className="flex items-center gap-1.5 font-label-sm text-label-sm font-bold text-error uppercase">
+                      <span className="material-symbols-outlined text-[16px]">gpp_bad</span>
+                      {t('chat.blocked')}
+                    </span>
+                    <div className="bg-surface-container p-space-md rounded-lg font-terminal-stream text-sm text-error line-through break-all">
+                      {msg.proposedCommand.text}
+                    </div>
+                    <span className="font-body-sm text-body-sm text-on-surface-variant">{msg.policy?.reason}</span>
                   </div>
                 )}
                 {msg.executionStatus === 'executed' && (
@@ -223,7 +288,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ activeSession }) => {
             </div>
             <div className="flex flex-col">
               <span className="font-headline-sm text-headline-sm text-on-surface">
-                {t('chat.read_terminal') || 'Leer salida de la terminal'}
+                {t('chat.read_terminal')}
               </span>
             </div>
           </label>

@@ -19,6 +19,14 @@ const AppContent: React.FC = () => {
   const { t, theme, setTheme, language, setLanguage } = useAppContext();
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => !!localStorage.getItem('guardian-user-email'));
   const [activeSession, setActiveSession] = useState<ActiveSessionConfig | null>(() => {
+    // Restore the full session (scope + mode), not just its id, so the policy
+    // engine keeps enforcing the authorized scope after the app is reopened.
+    try {
+      const full = localStorage.getItem('guardian-session');
+      if (full) return JSON.parse(full) as ActiveSessionConfig;
+    } catch {
+      /* corrupted entry: fall through to the legacy id-only restore */
+    }
     const saved = localStorage.getItem('guardian-session-id');
     if (saved) {
       return {
@@ -102,7 +110,7 @@ const AppContent: React.FC = () => {
           </div>
         )}
         <SessionSetup 
-          onSessionInitialized={(config) => { localStorage.setItem("guardian-session-id", config.sessionId); setActiveSession(config); }} 
+          onSessionInitialized={(config) => { localStorage.setItem("guardian-session-id", config.sessionId); localStorage.setItem("guardian-session", JSON.stringify(config)); setActiveSession(config); }}
           isBackendOnline={backendStatus === 'online'} 
         />
       </div>
@@ -167,7 +175,7 @@ const AppContent: React.FC = () => {
           </nav>
           <div className="flex items-center">
             <button 
-              onClick={() => { localStorage.removeItem('guardian-session-id'); localStorage.removeItem('guardian-user-email'); setActiveSession(null); setIsAuthenticated(false); }}
+              onClick={() => { localStorage.removeItem('guardian-session-id'); localStorage.removeItem('guardian-session'); localStorage.removeItem('guardian-user-email'); setActiveSession(null); setIsAuthenticated(false); }}
               className="px-space-md py-1 border border-error-container text-error hover:bg-error-container hover:text-on-error-container font-label-sm text-label-sm uppercase rounded transition-colors flex items-center gap-space-xs">
               <span className="material-symbols-outlined text-[14px]">power_settings_new</span>
               {t('nav.logout')}

@@ -73,7 +73,7 @@ export const SessionSetup: React.FC<SessionSetupProps> = ({ onSessionInitialized
               <span className="material-symbols-outlined text-[24px] text-primary">key</span>
             </div>
             <h1 className="font-headline-lg text-headline-lg tracking-tight text-on-surface mb-0.5 uppercase font-semibold">
-              Requisito de ConfiguraciÃ³n
+              Requisito de Configuración
             </h1>
             <p className="font-body-md text-body-md text-on-surface-variant mt-2">
               Para que The Guardian of Kaliche funcione, necesitas proveer una <strong>API Key de Google Gemini</strong>.

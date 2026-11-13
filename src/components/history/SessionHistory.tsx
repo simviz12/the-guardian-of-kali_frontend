@@ -31,7 +31,7 @@ export const SessionHistory: React.FC<{ activeTab?: string }> = ({ activeTab }) 
       cmd.origin,
       `"${cmd.text.replace(/"/g, '""')}"`,
       cmd.risk_level || 'LOW',
-      cmd.policy_decision === 'BLOCKED' ? 'BLOCKED' : 'EXECUTED'
+      (cmd.policy_decision === 'BLOCKED' || cmd.risk_level === 'BLOCKED') ? 'BLOCKED' : 'EXECUTED'
     ]);
     
     const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\r\n');
@@ -145,18 +145,18 @@ export const SessionHistory: React.FC<{ activeTab?: string }> = ({ activeTab }) 
                       {cmd.origin}
                     </span>
                   </td>
-                  <td className={`py-2 px-3 font-semibold select-all ${cmd.policy_decision === 'BLOCKED' ? 'text-error line-through' : (cmd.origin === 'MANUAL_USER' ? 'text-primary' : 'text-tertiary')}`}>
+                  <td className={`py-2 px-3 font-semibold select-all ${(cmd.policy_decision === 'BLOCKED' || cmd.risk_level === 'BLOCKED') ? 'text-error line-through' : (cmd.origin === 'MANUAL_USER' ? 'text-primary' : 'text-tertiary')}`}>
                     {cmd.text}
                   </td>
                   <td className="py-2 px-3 text-center">
-                    <span className={`px-2 py-0.5 uppercase text-[10px] font-bold rounded ${cmd.risk_level === 'HIGH' || cmd.risk_level === 'BLOCKED' || cmd.policy_decision === 'BLOCKED' ? 'bg-error-container text-on-error-container' : 'bg-surface-container-high text-primary'}`}>
+                    <span className={`px-2 py-0.5 uppercase text-[10px] font-bold rounded ${cmd.risk_level === 'HIGH' || cmd.risk_level === 'BLOCKED' || (cmd.policy_decision === 'BLOCKED' || cmd.risk_level === 'BLOCKED') ? 'bg-error-container text-on-error-container' : 'bg-surface-container-high text-primary'}`}>
                       {cmd.risk_level || 'LOW'}
                     </span>
                   </td>
                   <td className="py-2 px-3 text-right">
-                    <span className={`px-2 py-0.5 uppercase text-[10px] font-bold inline-flex items-center gap-1 rounded ${cmd.policy_decision === 'BLOCKED' ? 'bg-error-container text-error' : 'bg-surface-container-high text-primary'}`}>
-                      <span className="material-symbols-outlined text-[10px]">{cmd.policy_decision === 'BLOCKED' ? 'block' : 'check'}</span> 
-                      {cmd.policy_decision === 'BLOCKED' ? 'BLOCKED' : 'EXECUTED'}
+                    <span className={`px-2 py-0.5 uppercase text-[10px] font-bold inline-flex items-center gap-1 rounded ${(cmd.policy_decision === 'BLOCKED' || cmd.risk_level === 'BLOCKED') ? 'bg-error-container text-error' : 'bg-surface-container-high text-primary'}`}>
+                      <span className="material-symbols-outlined text-[10px]">{(cmd.policy_decision === 'BLOCKED' || cmd.risk_level === 'BLOCKED') ? 'block' : 'check'}</span> 
+                      {(cmd.policy_decision === 'BLOCKED' || cmd.risk_level === 'BLOCKED') ? 'BLOCKED' : 'EXECUTED'}
                     </span>
                   </td>
                 </tr>
