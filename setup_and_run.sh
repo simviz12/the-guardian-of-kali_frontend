@@ -265,7 +265,8 @@ elif command -v fuser >/dev/null 2>&1; then
     fuser -k 8765/tcp >/dev/null 2>&1 || true
 fi
 
-BACKEND_LOG="${TMPDIR:-/tmp}/guardian-backend.log"
+# Per-user file: a log left by another account (e.g. root) would not be writable.
+BACKEND_LOG="${TMPDIR:-/tmp}/guardian-backend-$(id -u).log"
 cd "$BACKEND_DIR"
 "$BACKEND_DIR/.venv/bin/python" -m src.main >"$BACKEND_LOG" 2>&1 &
 BACKEND_PID=$!

@@ -82,7 +82,12 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ activeSession }) => {
         if (proposed) {
           // Every AI command goes through the policy engine before it can run.
           // If the engine cannot be reached the command is refused (fail closed).
-          const evaluation = await apiClient.evaluatePolicy(proposed.text, targets, mode);
+          const evaluation = await apiClient.evaluatePolicy(
+            proposed.text,
+            targets,
+            mode,
+            activeSession?.allowedPorts ?? ''
+          );
           policy = evaluation.success
             ? evaluation.data
             : {

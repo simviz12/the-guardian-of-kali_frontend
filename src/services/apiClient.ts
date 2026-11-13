@@ -383,7 +383,8 @@ export class BackendApiClient {
   async evaluatePolicy(
     command: string,
     authorizedTargets: string[],
-    operationMode: string
+    operationMode: string,
+    allowedPorts: string = ''
   ): Promise<ApiResult<PolicyEvaluation>> {
     return this.request<PolicyEvaluation>('/policy/evaluate', {
       method: 'POST',
@@ -391,6 +392,7 @@ export class BackendApiClient {
         command,
         authorized_targets: authorizedTargets,
         operation_mode: operationMode,
+        allowed_ports: allowedPorts,
       }),
     });
   }

@@ -14,5 +14,7 @@ export interface ActiveSessionConfig {
   user: string;
   operationMode: OperationMode;
   authorizedTargets: AuthorizedTargetConfig[];
+  /** Allowed ports as typed by the operator (e.g. "80, 443, 8080-8090"); empty = no limit. */
+  allowedPorts?: string;
   startedAt: string;
 }

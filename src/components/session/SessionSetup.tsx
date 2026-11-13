@@ -12,6 +12,7 @@ export const SessionSetup: React.FC<SessionSetupProps> = ({ onSessionInitialized
   const { t } = useAppContext();
   const [operatorId, setOperatorId] = useState('carlos');
   const [targetScope, setTargetScope] = useState('10.10.10.10');
+  const [allowedPorts, setAllowedPorts] = useState('');
   const [operationMode, setOperationMode] = useState<OperationMode>('suggestion');
   const [isInitializing, setIsInitializing] = useState(false);
   const [hasApiKey, setHasApiKey] = useState<boolean | null>(null);
@@ -50,7 +51,8 @@ export const SessionSetup: React.FC<SessionSetupProps> = ({ onSessionInitialized
       onSessionInitialized({
         sessionId: crypto.randomUUID(),
         operationMode,
-        authorizedTargets: [{ value: targetScope, description: 'User defined scope' }],
+        authorizedTargets: [{ value: targetScope.trim(), description: 'User defined scope' }],
+        allowedPorts: allowedPorts.trim(),
         user: operatorId, startedAt: new Date().toISOString(),
       });
     }, 1200);
@@ -197,8 +199,11 @@ export const SessionSetup: React.FC<SessionSetupProps> = ({ onSessionInitialized
                   <div className="relative bg-surface-container border border-outline-variant rounded flex items-center px-space-sm py-1 focus-within:border-tertiary/50 transition-colors">
                     <span className="material-symbols-outlined text-[16px] text-tertiary mr-2">settings_ethernet</span>
                     <input 
-                      id="target-ports" 
-                      type="text" 
+                      id="target-ports"
+                      type="text"
+                      value={allowedPorts}
+                      onChange={(e) => setAllowedPorts(e.target.value)}
+                      pattern="[0-9,\s\-]*"
                       placeholder={t('session.ports.placeholder')} 
                       className="w-full bg-transparent font-label-md text-label-md text-on-surface focus:outline-none placeholder-outline" 
                     />

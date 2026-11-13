@@ -21,15 +21,29 @@ Esta guía detalla el proceso completo para instalar y ejecutar **The Guardian o
 
 ## ⚡ Método 1: Instalación y Arranque en 1 Paso (`setup_and_run.sh`)
 
-Este script se encarga de todo: verifica herramientas, clona el backend si no existe, instala dependencias de Python y Node, compila la app y la abre de inmediato.
+Este script se encarga de todo y **avisa antes de instalar cada cosa**: instala lo que falte
+(Git, Node.js ≥ 18, Python con `venv`, compilador y las librerías gráficas que necesita la
+ventana), clona el frontend y el backend, instala dependencias, compila la app y la abre.
+
+**Opción A — solo el script, en una carpeta vacía (lo más simple):**
 
 ```bash
-# 1. Dar permisos de ejecución
+mkdir guardian && cd guardian
+curl -fsSLO https://raw.githubusercontent.com/simviz12/the-guardian-of-kali_frontend/main/setup_and_run.sh
 chmod +x setup_and_run.sh
-
-# 2. Ejecutar
 ./setup_and_run.sh
 ```
+
+**Opción B — si ya clonaste el repo frontend:**
+
+```bash
+./setup_and_run.sh
+```
+
+> - Los paquetes del sistema se instalan con `sudo`: puede pedir tu contraseña.
+> - Se necesita un **escritorio gráfico** (no funciona por SSH sin pantalla).
+> - Si lo ejecutas como `root` (habitual en Kali), la app se abre con `--no-sandbox`.
+> - Probado en Kali Linux (root y usuario normal). En macOS instala Homebrew si falta.
 
 ---
 
