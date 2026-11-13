@@ -26,10 +26,17 @@ es preparar WSL + Kali, y luego instalar la aplicación.
 
 ---
 
-## 1. Instalar WSL2 + Kali Linux  *(la "parte de Kali")*
+## 1. Instalar WSL2 + Kali Linux  *(la "parte de Kali")* — **automático**
 
-> ⚠️ **Este paso NO lo hace el instalador automático.** Hay que hacerlo una sola vez,
-> a mano, porque necesita permisos de administrador y reiniciar el equipo.
+> ✅ **El instalador del Paso 3 (`setup_and_run.bat`) ya hace este paso solo:** instala la
+> distro `kali-linux` en WSL2 y las herramientas básicas (nmap, whois, dig, curl).
+> No hace falta crear usuario de Linux: la app entra a Kali como `root`.
+>
+> - Si WSL2 **ya está habilitado** en el equipo, no pide nada más.
+> - Si WSL2 **no está habilitado**, Windows pedirá permisos de administrador; al terminar
+>   hay que **reiniciar el equipo y volver a ejecutar el `.bat`**.
+>
+> Los pasos manuales de abajo solo son necesarios si la instalación automática falla.
 
 1. Abre **PowerShell como administrador**
    (botón derecho en el menú Inicio → *Terminal (Administrador)* o *Windows PowerShell (Administrador)*).
@@ -94,7 +101,8 @@ Tienes **dos formas**, ambas con el mismo `setup_and_run.bat`:
 2. Haz **doble clic** en **`setup_and_run.bat`** (clona solo el backend si falta).
 
 El script hace todo automáticamente:
-- ✅ Verifica Git, Node.js y Python — **y los instala con `winget` si faltan** (avisa si falta WSL).
+- ✅ Verifica Git, Node.js y Python — **y los instala con `winget` si faltan**.
+- ✅ **Instala Kali Linux en WSL2** (y nmap, whois, dig, curl) si no está.
 - ✅ **Clona el frontend y el backend** que falten desde GitHub.
 - ✅ Crea los archivos `.env` a partir de las plantillas.
 - ✅ Instala dependencias de Python (`.venv`) y de Node (`npm`).
@@ -143,9 +151,9 @@ La **terminal de Kali funciona sin API Key**; la clave solo activa el **copiloto
 
 ## 📋 Resumen rápido (checklist)
 
-- [ ] `wsl --install -d kali-linux` + reiniciar + crear usuario Linux
+- [ ] Descargar el `.bat` en una carpeta vacía y hacer **doble clic** (clona ambos repos,
+      instala Git/Node/Python con winget si faltan, e instala Kali en WSL2)
+- [ ] Si pidió reiniciar (WSL recién habilitado): reiniciar y volver a ejecutar el `.bat`
 - [ ] `wsl -l -v` muestra **kali-linux / VERSION 2**
-- [ ] Git, Node.js y Python (los instala el `.bat` con winget si faltan)
-- [ ] Descargar el `.bat` en una carpeta vacía y hacer **doble clic** (clona ambos repos)
 - [ ] API Key de Gemini puesta en **AJUSTES**
 - [ ] **API OK** visible y `whoami` responde en la terminal
